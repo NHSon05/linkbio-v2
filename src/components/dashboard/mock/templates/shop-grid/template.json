@@ -1,0 +1,20 @@
+{
+  "id": "shop-grid",
+  "name": "Shop grid",
+  "description": "Lưới sản phẩm 2 cột có thumbnail. Hợp page bán hàng nhiều sản phẩm.",
+  "desktop": "grid",
+  "desktopColumns": 3,
+  "regions": {
+    "header": { "label": "Header", "allow": ["profile"] },
+    "hero": { "label": "Hero", "allow": ["banner", "hero-video"], "max": 1, "rank": false },
+    "main": {
+      "label": "Nội dung chính",
+      "allow": ["card", "shop", "products", "carousel", "link", "banner"],
+      "variants": ["grid-2", "list"],
+      "defaultVariant": "grid-2",
+      "rank": true
+    },
+    "footer": { "label": "Footer", "allow": ["link", "banner", "subscribe"], "rank": false }
+  },
+  "themeDefaults": { "bg": "#F7F7F7", "accent": "#E6CA9A", "font": "Sora", "radius": 20, "button": "rounded" }
+}

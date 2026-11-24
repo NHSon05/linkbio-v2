@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>Xác nhận email cho bio-link</title>
+  </head>
+  <body>
+    <h1>Xác nhận email cho bio-link</h1>
+    <p>Mở liên kết bên dưới và chọn Xác nhận email để hoàn tất đăng ký.</p>
+    <p><a href="{{ .SiteURL }}/auth/confirm?type=email&amp;token_hash={{ .TokenHash }}">Xác nhận email</a></p>
+    <p>Nếu bạn không yêu cầu đăng ký, bạn có thể bỏ qua email này.</p>
+  </body>
+</html>

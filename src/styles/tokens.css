@@ -1,0 +1,191 @@
+/*
+ * Design tokens của dashboard — nguồn duy nhất cho màu, chữ, font, viền.
+ * Chỉ dùng trong apps/dashboard; landing KHÔNG import file này
+ * (landing có design system riêng trong apps/landing/src/styles/page.css).
+ *
+ * Ba tầng:
+ *   1. Primitive  (--palette-*, --font-size-*, --border-width-*)  — giá trị thô, không dùng trực tiếp trong component.
+ *   2. Semantic   (--background, --primary, --border, ...)        — biến shadcn/ui, đổi theo light/dark.
+ *   3. @theme     (--color-*, --text-*, --radius-*, ...)           — ánh xạ sang utility của Tailwind (bg-primary, text-sm, rounded-lg).
+ *
+ * Bảng màu: Sora · Lunar Shadow #282828 · Clean White #FFFFFF · Gray Whisper #F7F7F7
+ *           Gentle Olive #CBD77E · Winter Hazel #E6CA9A
+ */
+
+/* ------------------------------------------------------------------ */
+/* 1. Primitive                                                        */
+/* ------------------------------------------------------------------ */
+:root {
+  /* Màu thương hiệu */
+  --palette-ink: #282828; /* Lunar Shadow */
+  --palette-white: #ffffff; /* Clean White */
+  --palette-whisper: #f7f7f7; /* Gray Whisper */
+  --palette-olive: #cbd77e; /* Gentle Olive */
+  --palette-olive-soft: #eef3d2;
+  --palette-olive-deep: #7e8e22;
+  --palette-olive-night: #353a1f;
+  --palette-hazel: #e6ca9a; /* Winter Hazel */
+
+  /* Thang xám ấm */
+  --palette-gray-50: #f7f7f7;
+  --palette-gray-100: #f1f1ee;
+  --palette-gray-200: #ecece8;
+  --palette-gray-400: #9a9a93;
+  --palette-gray-500: #8e8e89;
+  --palette-gray-700: #363636;
+  --palette-gray-800: #333333;
+  --palette-gray-900: #282828;
+  --palette-gray-950: #1e1e1e;
+
+  /* Trạng thái */
+  --palette-red: #b4372a;
+  --palette-red-light: #e5735f;
+  --palette-green: #7fb33a;
+  --palette-amber: #e6a23c;
+
+  /* Font — next/font gán --font-sora, --font-geist-mono trên <html> (app/layout.tsx) */
+  --font-family-sans: var(--font-sora, "Sora"), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-mono: var(--font-geist-mono, ui-monospace), SFMono-Regular, Menlo, monospace;
+
+  /* Cỡ chữ */
+  --font-size-2xs: 0.6875rem; /* 11px — nhãn nhỏ, badge */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.8125rem; /* 13px — chữ phụ */
+  --font-size-md: 0.84375rem; /* 13.5px — chữ thân mặc định của control */
+  --font-size-base: 0.875rem; /* 14px */
+  --font-size-lg: 1rem; /* 16px */
+  --font-size-xl: 1.125rem; /* 18px — tiêu đề panel */
+  --font-size-2xl: 1.375rem; /* 22px — tiêu đề trang */
+  --font-size-3xl: 1.75rem; /* 28px — hero / số liệu */
+
+  /* Độ đậm */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Khoảng dòng */
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+
+  /* Khoảng chữ */
+  --letter-spacing-tight: -0.02em; /* tiêu đề */
+  --letter-spacing-body: -0.005em; /* chữ thân */
+  --letter-spacing-wide: 0.04em; /* nhãn viết hoa */
+
+  /* Viền */
+  --border-width-thin: 1px;
+  --border-width-thick: 1.5px; /* input/segmented đang focus */
+  --border-width-heavy: 2px;
+
+  /* Bo góc — mọi cấp tính từ --radius */
+  --radius: 1.25rem; /* 20px */
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. Semantic (biến shadcn/ui) — light                                */
+/* ------------------------------------------------------------------ */
+:root {
+  --background: var(--palette-whisper);
+  --foreground: var(--palette-ink);
+  --card: var(--palette-white);
+  --card-foreground: var(--palette-ink);
+  --popover: var(--palette-white);
+  --popover-foreground: var(--palette-ink);
+  --primary: var(--palette-ink);
+  --primary-foreground: var(--palette-white);
+  --secondary: var(--palette-gray-100);
+  --secondary-foreground: var(--palette-ink);
+  --muted: var(--palette-gray-100);
+  --muted-foreground: var(--palette-gray-500);
+  --accent: var(--palette-olive-soft);
+  --accent-foreground: var(--palette-ink);
+  --destructive: var(--palette-red);
+  --border: var(--palette-gray-200);
+  --input: var(--palette-gray-200);
+  --ring: var(--palette-olive);
+  --brand: var(--palette-olive-deep);
+  --success: var(--palette-green);
+  --warning: var(--palette-amber);
+  --chart-1: var(--palette-olive);
+  --chart-2: var(--palette-hazel);
+  --chart-3: var(--palette-olive-deep);
+  --chart-4: var(--palette-gray-500);
+  --chart-5: var(--palette-ink);
+  --sidebar: var(--palette-white);
+  --sidebar-foreground: var(--palette-ink);
+  --sidebar-primary: var(--palette-ink);
+  --sidebar-primary-foreground: var(--palette-white);
+  --sidebar-accent: var(--palette-olive-soft);
+  --sidebar-accent-foreground: var(--palette-ink);
+  --sidebar-border: var(--palette-gray-200);
+  --sidebar-ring: var(--palette-olive);
+
+  --shadow-color: 40 40 40;
+}
+
+/* ------------------------------------------------------------------ */
+/* 2b. Semantic — dark                                                 */
+/* Dark theo hệ điều hành; thêm .dark / .light lên <html> để ép.       */
+/* ------------------------------------------------------------------ */
+/* Giữ hai khối dưới giống hệt nhau. */
+.dark {
+  --background: var(--palette-gray-950);
+  --foreground: var(--palette-whisper);
+  --card: var(--palette-ink);
+  --card-foreground: var(--palette-whisper);
+  --popover: var(--palette-ink);
+  --popover-foreground: var(--palette-whisper);
+  --primary: var(--palette-whisper);
+  --primary-foreground: var(--palette-ink);
+  --secondary: var(--palette-gray-800);
+  --secondary-foreground: var(--palette-whisper);
+  --muted: var(--palette-gray-800);
+  --muted-foreground: var(--palette-gray-400);
+  --accent: var(--palette-olive-night);
+  --accent-foreground: var(--palette-whisper);
+  --destructive: var(--palette-red-light);
+  --border: var(--palette-gray-700);
+  --input: var(--palette-gray-700);
+  --brand: var(--palette-olive);
+  --chart-5: var(--palette-whisper);
+  --sidebar: var(--palette-ink);
+  --sidebar-foreground: var(--palette-whisper);
+  --sidebar-primary: var(--palette-olive);
+  --sidebar-primary-foreground: var(--palette-ink);
+  --sidebar-accent: var(--palette-olive-night);
+  --sidebar-accent-foreground: var(--palette-whisper);
+  --sidebar-border: var(--palette-gray-700);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: var(--palette-gray-950);
+    --foreground: var(--palette-whisper);
+    --card: var(--palette-ink);
+    --card-foreground: var(--palette-whisper);
+    --popover: var(--palette-ink);
+    --popover-foreground: var(--palette-whisper);
+    --primary: var(--palette-whisper);
+    --primary-foreground: var(--palette-ink);
+    --secondary: var(--palette-gray-800);
+    --secondary-foreground: var(--palette-whisper);
+    --muted: var(--palette-gray-800);
+    --muted-foreground: var(--palette-gray-400);
+    --accent: var(--palette-olive-night);
+    --accent-foreground: var(--palette-whisper);
+    --destructive: var(--palette-red-light);
+    --border: var(--palette-gray-700);
+    --input: var(--palette-gray-700);
+    --brand: var(--palette-olive);
+    --chart-5: var(--palette-whisper);
+    --sidebar: var(--palette-ink);
+    --sidebar-foreground: var(--palette-whisper);
+    --sidebar-primary: var(--palette-olive);
+    --sidebar-primary-foreground: var(--palette-ink);
+    --sidebar-accent: var(--palette-olive-night);
+    --sidebar-accent-foreground: var(--palette-whisper);
+    --sidebar-border: var(--palette-gray-700);
+  }
+}

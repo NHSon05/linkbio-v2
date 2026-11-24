@@ -1,0 +1,180 @@
+{
+  "slug": "admin/beat-artist",
+  "source": {
+    "platform": "instagram",
+    "pageId": "@lumen.beats"
+  },
+  "template": "video-first",
+  "theme": {},
+  "layout": {
+    "hero": {
+      "blocks": ["r1"]
+    },
+    "main": {
+      "variant": "list",
+      "blocks": ["vd1", "mu1", "t1", "m1"]
+    },
+    "footer": {
+      "blocks": ["s1"]
+    }
+  },
+  "nav": true,
+  "profile": {
+    "cover": "/img/cover.svg",
+    "avatar": "",
+    "title": "lumen",
+    "subtitle": "Beatmaker",
+    "about": "Lo-fi & chill beats. Tour châu Âu tháng 6, merch mới đã lên kệ.",
+    "socials": [
+      {
+        "type": "instagram",
+        "url": "https://instagram.com"
+      },
+      {
+        "type": "tiktok",
+        "url": "https://tiktok.com"
+      },
+      {
+        "type": "twitter",
+        "url": "https://x.com"
+      },
+      {
+        "type": "facebook",
+        "url": "https://facebook.com"
+      },
+      {
+        "type": "website",
+        "url": "https://example.com"
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "type": "release",
+      "id": "r1",
+      "title": "Latest release",
+      "navLabel": "Latest Release",
+      "thumbnail": "/img/cassette.svg",
+      "bg": "#E6CA9A",
+      "text": "Night Tapes (EP)",
+      "cta": "Listen now",
+      "url": "https://open.spotify.com"
+    },
+    {
+      "type": "video",
+      "id": "vd1",
+      "title": "Videos",
+      "viewAll": "https://youtube.com",
+      "items": [
+        {
+          "id": "vd1-1",
+          "text": "Night Tapes: visualizer",
+          "thumbnail": "/img/cassette-yellow.svg",
+          "bg": "#CBD77E",
+          "url": "https://youtube.com"
+        },
+        {
+          "id": "vd1-2",
+          "text": "Live session @ studio",
+          "thumbnail": "/img/cassette.svg",
+          "bg": "#E6CA9A",
+          "url": "https://youtube.com"
+        },
+        {
+          "id": "vd1-3",
+          "text": "Making of the beat",
+          "thumbnail": "/img/cassette-yellow.svg",
+          "bg": "#DCDCD6",
+          "url": "https://youtube.com"
+        }
+      ]
+    },
+    {
+      "type": "carousel",
+      "id": "mu1",
+      "title": "Music",
+      "viewAll": "https://open.spotify.com",
+      "items": [
+        {
+          "id": "mu1-1",
+          "thumbnail": "/img/cassette.svg",
+          "text": "Night Tapes",
+          "url": "https://open.spotify.com"
+        },
+        {
+          "id": "mu1-2",
+          "thumbnail": "/img/cassette-yellow.svg",
+          "text": "City Lights",
+          "url": "https://open.spotify.com"
+        },
+        {
+          "id": "mu1-3",
+          "thumbnail": "/img/vinyl.svg",
+          "text": "Rainy Sundays",
+          "url": "https://open.spotify.com"
+        }
+      ]
+    },
+    {
+      "type": "events",
+      "id": "t1",
+      "title": "Tour Dates",
+      "navLabel": "Tour",
+      "viewAll": "https://example.com/tour",
+      "items": [
+        {
+          "id": "t1-1",
+          "date": "2027-06-23",
+          "venue": "The Warehouse",
+          "city": "London, UK",
+          "url": "https://example.com/t/1"
+        },
+        {
+          "id": "t1-2",
+          "date": "2027-06-25",
+          "venue": "Salle Lumière",
+          "city": "Paris, France",
+          "url": "https://example.com/t/2"
+        },
+        {
+          "id": "t1-3",
+          "date": "2027-06-28",
+          "venue": "Hafenhalle",
+          "city": "Berlin, Germany",
+          "url": "https://example.com/t/3"
+        }
+      ]
+    },
+    {
+      "type": "products",
+      "id": "m1",
+      "title": "Merch",
+      "viewAll": "https://example.com/shop",
+      "items": [
+        {
+          "id": "m1-1",
+          "thumbnail": "/img/vinyl.svg",
+          "text": "Vinyl",
+          "price": "$20.00",
+          "url": "https://example.com/shop/vinyl"
+        },
+        {
+          "id": "m1-2",
+          "thumbnail": "/img/tshirt.svg",
+          "text": "T-Shirt",
+          "price": "$15.00",
+          "url": "https://example.com/shop/tee"
+        }
+      ]
+    },
+    {
+      "type": "subscribe",
+      "id": "s1",
+      "title": "Mailing List",
+      "text": "Subscribe below to receive updates about new music, tour dates, videos and merch.",
+      "placeholder": "name@email.com",
+      "cta": "Subscribe"
+    }
+  ],
+  "updatedAt": "2026-11-19T10:00:00Z"
+}

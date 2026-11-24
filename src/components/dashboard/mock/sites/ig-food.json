@@ -1,0 +1,88 @@
+{
+  "slug": "admin/ig-food",
+  "source": {
+    "platform": "instagram",
+    "pageId": "@an.gi.hom.nay"
+  },
+  "template": "classic",
+  "theme": {
+    "bg": "#FFFFFF"
+  },
+  "layout": {
+    "hero": {
+      "blocks": ["b1"]
+    },
+    "main": {
+      "variant": "list",
+      "blocks": ["p2", "p1", "p3"]
+    },
+    "footer": {
+      "blocks": ["l1"]
+    }
+  },
+  "profile": {
+    "about": "Mỗi tuần 3 công thức mới, nguyên liệu dễ mua ở chợ và siêu thị.",
+    "avatar": "",
+    "title": "Ăn gì hôm nay?",
+    "subtitle": "Công thức 15 phút cho người bận rộn",
+    "socials": [
+      {
+        "type": "instagram",
+        "url": "https://instagram.com"
+      },
+      {
+        "type": "facebook",
+        "url": "https://facebook.com"
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "type": "banner",
+      "id": "b1",
+      "text": "Ebook 50 món nhanh: miễn phí",
+      "subtext": "Chỉ trong tuần này",
+      "url": "https://example.com/ebook"
+    },
+    {
+      "type": "card",
+      "id": "p1",
+      "thumbnail": "",
+      "text": "Mì xào bò 10 phút",
+      "subtext": "Reel mới nhất",
+      "url": "https://instagram.com",
+      "score": 55,
+      "publishedAt": "2026-11-18"
+    },
+    {
+      "type": "card",
+      "id": "p2",
+      "thumbnail": "",
+      "text": "Gà nướng nồi chiên",
+      "subtext": "Được lưu nhiều nhất",
+      "metric": "2.4k",
+      "unit": "lưu",
+      "url": "https://instagram.com",
+      "score": 78,
+      "publishedAt": "2026-10-01"
+    },
+    {
+      "type": "card",
+      "id": "p3",
+      "thumbnail": "",
+      "text": "Bánh flan không cần lò",
+      "url": "https://instagram.com",
+      "score": 20,
+      "publishedAt": "2026-11-12"
+    },
+    {
+      "type": "link",
+      "id": "l1",
+      "text": "Dụng cụ bếp mình dùng",
+      "url": "https://example.com/tools",
+      "primary": true,
+      "icon": "link"
+    }
+  ],
+  "updatedAt": "2026-11-18T20:00:00Z"
+}

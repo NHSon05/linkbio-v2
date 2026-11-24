@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   reactCompiler: true,
+  logging: {
+    incomingRequests: { ignore: [/^\/auth\/(?:confirm|callback)(?:[/?]|$)/] },
+  },
   turbopack: {
     rules: {
       "*.css": {

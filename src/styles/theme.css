@@ -1,0 +1,144 @@
+/*
+ * Ánh xạ token (styles/tokens.css) sang utility Tailwind cho dashboard.
+ * Ví dụ: bg-primary, text-muted-foreground, text-md, font-semibold,
+ *        tracking-tight, border-thick, rounded-xl, shadow-soft.
+ */
+
+/* Dark theo hệ điều hành; .dark / .light trên <html> để ép. */
+@custom-variant dark {
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not(.light), :root:not(.light) *) {
+      @slot;
+    }
+  }
+}
+
+@theme inline {
+  /* Font */
+  --font-sans: var(--font-family-sans);
+  --font-heading: var(--font-family-sans);
+  --font-mono: var(--font-family-mono);
+
+  /* Cỡ chữ (kèm line-height mặc định) */
+  --text-2xs: var(--font-size-2xs);
+  --text-2xs--line-height: var(--line-height-normal);
+  --text-xs: var(--font-size-xs);
+  --text-xs--line-height: var(--line-height-normal);
+  --text-sm: var(--font-size-sm);
+  --text-sm--line-height: var(--line-height-normal);
+  --text-md: var(--font-size-md);
+  --text-md--line-height: var(--line-height-normal);
+  --text-base: var(--font-size-base);
+  --text-base--line-height: var(--line-height-normal);
+  --text-lg: var(--font-size-lg);
+  --text-lg--line-height: var(--line-height-snug);
+  --text-xl: var(--font-size-xl);
+  --text-xl--line-height: var(--line-height-snug);
+  --text-2xl: var(--font-size-2xl);
+  --text-2xl--line-height: var(--line-height-tight);
+  --text-3xl: var(--font-size-3xl);
+  --text-3xl--line-height: var(--line-height-tight);
+
+  --font-weight-normal: var(--font-weight-regular);
+  --font-weight-medium: var(--font-weight-medium);
+  --font-weight-semibold: var(--font-weight-semibold);
+  --font-weight-bold: var(--font-weight-bold);
+
+  --leading-tight: var(--line-height-tight);
+  --leading-snug: var(--line-height-snug);
+  --leading-normal: var(--line-height-normal);
+
+  --tracking-tight: var(--letter-spacing-tight);
+  --tracking-body: var(--letter-spacing-body);
+  --tracking-wide: var(--letter-spacing-wide);
+
+  /* Màu semantic */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Màu thương hiệu (cố định, không đổi theo dark) */
+  --color-ink: var(--palette-ink);
+  --color-whisper: var(--palette-whisper);
+  --color-olive: var(--palette-olive);
+  --color-olive-foreground: var(--palette-ink);
+  --color-hazel: var(--palette-hazel);
+  --color-hazel-foreground: var(--palette-ink);
+
+  /* Viền: border-thin / border-thick / border-heavy */
+  --border-width-thin: var(--border-width-thin);
+  --border-width-thick: var(--border-width-thick);
+  --border-width-heavy: var(--border-width-heavy);
+
+  /* Bo góc */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Đổ bóng */
+  --shadow-soft: 0 1px 2px rgb(var(--shadow-color) / 0.03), 0 10px 30px rgb(var(--shadow-color) / 0.05);
+  --shadow-float: 0 30px 60px rgb(var(--shadow-color) / 0.18);
+}
+
+@utility border-thin {
+  border-width: var(--border-width-thin);
+}
+@utility border-thick {
+  border-width: var(--border-width-thick);
+}
+@utility border-heavy {
+  border-width: var(--border-width-heavy);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    letter-spacing: var(--letter-spacing-body);
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading tracking-tight;
+  }
+}

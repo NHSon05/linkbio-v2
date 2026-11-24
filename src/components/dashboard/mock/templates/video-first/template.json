@@ -1,0 +1,20 @@
+{
+  "id": "video-first",
+  "name": "Video lên đầu",
+  "description": "Video / release viral to nhất ở trên, sản phẩm vuốt ngang bên dưới. Hợp page TikTok.",
+  "desktop": "split",
+  "desktopColumns": 2,
+  "regions": {
+    "header": { "label": "Header", "allow": ["profile"] },
+    "hero": { "label": "Hero", "allow": ["hero-video", "video", "release"], "max": 1, "rank": false },
+    "main": {
+      "label": "Nội dung chính",
+      "allow": ["card", "carousel", "link", "shop", "products", "events", "video", "banner"],
+      "variants": ["carousel", "list", "grid-2"],
+      "defaultVariant": "carousel",
+      "rank": true
+    },
+    "footer": { "label": "Footer", "allow": ["link", "subscribe"], "rank": false }
+  },
+  "themeDefaults": { "bg": "#282828", "accent": "#CBD77E", "font": "Sora", "radius": 24, "button": "pill" }
+}

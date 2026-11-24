@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6f0f0"/><stop offset=".45" stop-color="#7f8f92"/><stop offset=".8" stop-color="#2a3133"/><stop offset="1" stop-color="#151819"/>
+    </linearGradient>
+    <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9aa6a8" stop-opacity="0"/><stop offset="1" stop-color="#9aa6a8" stop-opacity=".35"/></linearGradient>
+  </defs>
+  <rect width="400" height="480" fill="url(#sky)"/>
+  <path d="M0 360 V330 h20 v-14 h16 v20 h22 v-30 h14 v18 h30 v-10 h18 v24 h26 v-36 h12 v28 h24 v-16 h20 v22 h30 v-26 h16 v16 h22 v-12 h28 v24 h20 v-18 h24 v30 h18 V360 Z" fill="#3a4245" opacity=".75"/>
+  <rect y="300" width="400" height="70" fill="url(#fog)"/>
+  <rect y="388" width="400" height="6" fill="#2a2f30"/>
+  <!-- người (silhouette trừu tượng) -->
+  <path d="M120 480 C126 400 150 360 200 350 C250 360 276 400 282 480 Z" fill="#121314"/>
+  <path d="M176 352 h48 v-26 h-48 z" fill="#161718"/>
+  <ellipse cx="200" cy="292" rx="34" ry="40" fill="#5b3d2e"/>
+  <path d="M164 280 C164 236 236 236 236 280 C226 268 174 268 164 280 Z" fill="#b5532c"/>
+  <rect x="163" y="274" width="74" height="12" rx="6" fill="#9c4524"/>
+  <path d="M136 430 C170 412 230 412 268 432" fill="none" stroke="#1d1f20" stroke-width="10" stroke-linecap="round"/>
+</svg>

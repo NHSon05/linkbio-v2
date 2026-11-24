@@ -1,0 +1,20 @@
+{
+  "id": "classic",
+  "name": "Classic",
+  "description": "Profile trên cùng, danh sách link và card. Giống Linktree, hợp page ít nội dung.",
+  "desktop": "center",
+  "desktopColumns": 2,
+  "regions": {
+    "header": { "label": "Header", "allow": ["profile"] },
+    "hero": { "label": "Hero", "allow": ["hero-video", "banner", "release"], "max": 1, "rank": false },
+    "main": {
+      "label": "Nội dung chính",
+      "allow": ["card", "link", "carousel", "banner", "shop", "products", "video", "events", "release"],
+      "variants": ["list", "grid-2", "carousel"],
+      "defaultVariant": "list",
+      "rank": true
+    },
+    "footer": { "label": "Footer", "allow": ["link", "subscribe", "banner"], "rank": false }
+  },
+  "themeDefaults": { "bg": "#F7F7F7", "accent": "#CBD77E", "font": "Sora", "radius": 28, "button": "pill" }
+}

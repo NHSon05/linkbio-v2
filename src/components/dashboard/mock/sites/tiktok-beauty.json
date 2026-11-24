@@ -1,0 +1,124 @@
+{
+  "slug": "admin/tiktok-beauty",
+  "source": {
+    "platform": "tiktok",
+    "pageId": "@beauty.daily"
+  },
+  "template": "video-first",
+  "theme": {
+    "bg": "#F7F7F7",
+    "accent": "#E6CA9A"
+  },
+  "layout": {
+    "hero": {
+      "blocks": ["v1"]
+    },
+    "main": {
+      "variant": "carousel",
+      "blocks": ["p1", "p2", "c1", "sh1"]
+    },
+    "footer": {
+      "blocks": ["l1", "l2"]
+    }
+  },
+  "profile": {
+    "avatar": "",
+    "title": "Beauty Daily",
+    "subtitle": "Review mỹ phẩm thật, không PR",
+    "about": "Mình test sản phẩm ít nhất 2 tuần trước khi review. Mọi link đều là link gốc từ shop chính hãng.",
+    "socials": [
+      {
+        "type": "tiktok",
+        "url": "https://tiktok.com"
+      },
+      {
+        "type": "youtube",
+        "url": "https://youtube.com"
+      },
+      {
+        "type": "instagram",
+        "url": "https://instagram.com"
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "type": "hero-video",
+      "id": "v1",
+      "thumbnail": "",
+      "text": "Skincare 5 bước cho da dầu",
+      "badge": "▶ 2.1M view",
+      "url": "https://tiktok.com"
+    },
+    {
+      "type": "card",
+      "id": "p1",
+      "thumbnail": "",
+      "text": "Serum Vitamin C",
+      "subtext": "Review cũ đang tăng view lại",
+      "metric": "93",
+      "unit": "score",
+      "url": "https://example.com/serum",
+      "score": 93,
+      "publishedAt": "2026-08-02"
+    },
+    {
+      "type": "card",
+      "id": "p2",
+      "thumbnail": "",
+      "text": "Kem chống nắng nâng tông",
+      "subtext": "Top 1 tuần này",
+      "url": "https://example.com/kcn",
+      "score": 64,
+      "publishedAt": "2026-11-17"
+    },
+    {
+      "type": "carousel",
+      "id": "c1",
+      "title": "Combo theo loại da",
+      "items": [
+        {
+          "id": "c1-1",
+          "thumbnail": "",
+          "text": "Da dầu",
+          "url": "https://example.com/dau"
+        },
+        {
+          "id": "c1-2",
+          "thumbnail": "",
+          "text": "Da khô",
+          "url": "https://example.com/kho"
+        },
+        {
+          "id": "c1-3",
+          "thumbnail": "",
+          "text": "Da nhạy cảm",
+          "url": "https://example.com/nhay-cam"
+        }
+      ],
+      "score": 30
+    },
+    {
+      "type": "shop",
+      "id": "sh1",
+      "title": "Mình đang dùng",
+      "collections": ["beauty", "fav"],
+      "limit": 4
+    },
+    {
+      "type": "link",
+      "id": "l1",
+      "text": "Shopee Mall",
+      "url": "https://shopee.vn",
+      "primary": true,
+      "icon": "bag"
+    },
+    {
+      "type": "link",
+      "id": "l2",
+      "text": "Đăng ký nhận deal qua email",
+      "url": "https://example.com/email"
+    }
+  ],
+  "updatedAt": "2026-11-19T08:30:00Z"
+}

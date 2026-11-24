@@ -1,4 +1,4 @@
-import { templates, templateIds } from "@/components/dashboard/mock/templates";
+import { templates, templateIds } from "@/templates";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

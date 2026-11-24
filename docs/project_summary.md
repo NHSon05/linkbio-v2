@@ -36,6 +36,8 @@ Update this file after each completed task: date, task ID, changed files, verifi
 
 ## Change log
 
+- 2026-11-25: Template editor. Adds the renderer (UI-01), template starter content (UI-03 migration, not yet pushed) and a form-based block editor with a live preview (UI-04). v1 block types are link, card, banner, video and shop. Verified with lint, typecheck, 17 tests, build and screenshots. Not verified against live Supabase data.
+
 - 2026-11-24 — Sprint 1: D-02 (pnpm only), OPS-01 (GitHub Actions CI + Vitest, 14 tests), FE-02..04 (dashboard reads/creates/saves real pages via `create_page`/`save_draft`). Verified: lint, typecheck, tests, build, screenshots with sample props. Not verified: live sign-in → create → save against Supabase; D-03 pending (Supabase dashboard).
 
 - 2026-11-24 — Migrations 20261124120000..120500 pushed to `link-bio-tree` (ufmapcififfzfmywivhm). Verified via REST with the anon key: 3 templates readable; pages, page_versions, products, page_events, deployments return 42501; `create_page` denied for anon. Full `rls_test.sql` not run against production.

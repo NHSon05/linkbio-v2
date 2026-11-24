@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Copy, Link2, Eye, EyeOff, Pencil, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { formatPrice, layoutOf, ProductSchema, type Product, type Site } from "@/lib/schemas/site";
-import { catalogFor } from "@/components/dashboard/mock/templates/catalog";
+import { catalogFor } from "@/templates/catalog";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

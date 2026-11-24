@@ -1,6 +1,6 @@
 # AGENTS.md — LinkBio Agent Router
 
-**Start here.** Read `project_summary.md`, `ARCHITECTURE.md`, `data-model.md`, `API_Contract.md`, `plan.md`, and `TASKS.md` before delegation.
+**Start here.** Read `docs/project_summary.md`, `docs/ARCHITECTURE.md`, `docs/data-model.md`, `docs/API_Contract.md`, `docs/plan.md`, and `docs/TASKS.md` before delegation.
 
 | Task type                            | Subagent                         |
 | ------------------------------------ | -------------------------------- |
@@ -32,6 +32,6 @@
 - MVP uses Next.js SSG and Vercel; do not introduce Astro, CloudFront or dedicated workers without approval.
 - Never fabricate completed tests, deployments or subagent execution.
 
-## Starter prompt
+## Start orchestration
 
-Read `AGENTS.md` and the project documentation. Act as the orchestrator. Audit TASKS.md, identify the first unblocked task, delegate specialists where supported, implement with explicit file boundaries, verify acceptance criteria, and update TASKS.md plus project_summary.md after confirmed completion.
+The Claude Code project settings load `orchestrator` as the main agent. Use `/plan`, `/implement`, `/review`, and `/test` to run individual stages. Use `/commit` to create a local commit and `/push` to publish commits. Use `/orchestrate <task ID or goal>` to coordinate a specific task or `/orchestrate` to start the next unblocked implementation task.

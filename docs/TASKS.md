@@ -6,6 +6,9 @@ Statuses: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`. Owner is the responsible age
 
 | ID        | Task                                                                                                                                                                          | Evidence                                                                                                                                    |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI-01     | Renderer `src/lib/renderer/BioPage.tsx` for link, card, banner, video (YouTube/TikTok embed), shop; unsafe URLs dropped (`safeUrl`); used by the editor preview               | 3 Vitest tests for URL/embed safety; screenshots of the three templates (2026-11-25)                                                        |
+| UI-03     | Template starter content: migration `20261125090000_template_starters.sql` gives each template sample blocks                                                                  | Vitest checks each starter parses and only uses allowed, editable types. **Not yet pushed to Supabase**                                     |
+| UI-04     | Block editor "Nội dung trang" (`workspace/blocks.tsx`): add (only types the region allows, respects `max`), edit fields, reorder, delete                                      | Screenshots; not yet tested against live data                                                                                               |
 | D-02      | pnpm only: removed `package-lock.json`, `packageManager: pnpm@12.14.0`, esbuild build approved in `pnpm-workspace.yaml`                                                       | `pnpm install --frozen-lockfile` passes (2026-11-24)                                                                                        |
 | OPS-01    | CI (`.github/workflows/ci.yml`): lint, typecheck, Vitest, build on every push; `.claude/**` excluded from ESLint                                                              | All four steps pass locally; first GitHub run on push of `feat/sprint-1`                                                                    |
 | FE-02     | `src/lib/pages.ts` `listPageDrafts()` (owner filter + RLS)                                                                                                                    | Typecheck/build pass. Not yet run against live data                                                                                         |
@@ -42,10 +45,9 @@ ON-01 done (see table above).
 
 ## Phase 4 — Renderer
 
-| ID    | Priority | Owner     | Task                                                                    | Depends on | Acceptance                          |
-| ----- | -------- | --------- | ----------------------------------------------------------------------- | ---------- | ----------------------------------- |
-| UI-01 | P0       | ui-editor | Block registry + renderer in `src/lib/renderer` (replace `MockBioPage`) | D-01       | Renders all block types; unit tests |
-| UI-02 | P0       | ui-editor | Same renderer for preview and public page; snapshot tests               | UI-01      | Preview matches public output       |
+| ID    | Priority | Owner     | Task                                                      | Depends on | Acceptance                    |
+| ----- | -------- | --------- | --------------------------------------------------------- | ---------- | ----------------------------- |
+| UI-02 | P0       | ui-editor | Same renderer for preview and public page; snapshot tests | UI-01      | Preview matches public output |
 
 ## Phase 5 — Publishing
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Pencil } from "lucide-react";
 import type { Site, SiteSummary } from "@/lib/schemas/site";
-import { templates } from "@/components/dashboard/mock/templates";
+import { templates } from "@/templates";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

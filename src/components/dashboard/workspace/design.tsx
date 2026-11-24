@@ -1,5 +1,5 @@
 import { REGIONS, layoutOf, type Block, type RegionName, type Site } from "@/lib/schemas/site";
-import { templates } from "@/components/dashboard/mock/templates";
+import { templates } from "@/templates";
 import { TemplatePicker } from "@/components/dashboard/workspace/template-picker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

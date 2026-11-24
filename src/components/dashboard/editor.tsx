@@ -10,6 +10,7 @@ import type { PageDraft } from "@/lib/pages";
 import { summaryOf, type Site } from "@/lib/schemas/site";
 import { Panel, StatusPill } from "@/components/dashboard/panel";
 import { Button } from "@/components/ui/button";
+import { BlockEditor } from "@/components/dashboard/workspace/blocks";
 import { CreatePage } from "@/components/dashboard/workspace/create-page";
 import { Design } from "@/components/dashboard/workspace/design";
 import { HomeOverview } from "@/components/dashboard/workspace/home";
@@ -183,6 +184,7 @@ export default function Editor({
                           locked={saving}
                         />
                         <Profile draft={draft} update={update} />
+                        <BlockEditor draft={draft} update={update} />
                       </>
                     )}
                     {view === "slug" && (

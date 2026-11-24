@@ -1,11 +1,13 @@
+import { EDITABLE_TYPES } from "@/lib/renderer/blocks";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { templates } from "@/components/dashboard/mock/templates";
+import { templates } from "@/templates";
 import {
   PageConfigSchema,
   SiteSchema,
   siteFromConfig,
   summaryOf,
+  type RegionName,
 } from "./site";
 
 const stored = {
@@ -52,9 +54,9 @@ describe("page config schema v1", () => {
     expect(summaryOf(site, true).publishedSlug).toBe("son/tech-review");
   });
 
-  it("seeds every template's default_config as a valid PageConfig", () => {
+  it("starts every template with valid sample content", () => {
     const sql = readFileSync(
-      "supabase/migrations/20261124120100_templates.sql",
+      "supabase/migrations/20261125090000_template_starters.sql",
       "utf8",
     );
     const configs = [...sql.matchAll(/'(\{"schemaVersion".*?\})'::jsonb/g)].map(
@@ -63,7 +65,23 @@ describe("page config schema v1", () => {
     expect(configs.map((c) => c.template).sort()).toEqual(
       Object.keys(templates).sort(),
     );
-    for (const config of configs)
+    for (const config of configs) {
       expect(PageConfigSchema.safeParse(config).success).toBe(true);
+      const ids = config.blocks.map((b: { id: string }) => b.id);
+      const placed = Object.values(config.layout).flatMap(
+        (r) => (r as { blocks: string[] }).blocks,
+      );
+      expect(placed.sort()).toEqual([...ids].sort());
+      // Every starter block is a type the editor can edit, in a region the template allows.
+      const tpl = templates[config.template];
+      for (const [region, r] of Object.entries(config.layout))
+        for (const id of (r as { blocks: string[] }).blocks) {
+          const type = config.blocks.find(
+            (b: { id: string }) => b.id === id,
+          ).type;
+          expect(EDITABLE_TYPES).toContain(type);
+          expect(tpl.regions[region as RegionName].allow).toContain(type);
+        }
+    }
   });
 });

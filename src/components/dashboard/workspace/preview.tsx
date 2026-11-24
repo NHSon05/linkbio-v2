@@ -2,12 +2,18 @@
 
 import { useState, type ReactNode } from "react";
 import { Monitor, Smartphone } from "lucide-react";
-import { themeOf, type Site } from "@/lib/schemas/site";
-import { templates } from "@/components/dashboard/mock/templates";
+import type { Site } from "@/lib/schemas/site";
+import { BioPage } from "@/lib/renderer/BioPage";
 import { BrowserFrame, PhoneFrame } from "@/components/dashboard/device-frame";
 import { Button } from "@/components/ui/button";
 
-export function DevicePicker({ desktop, onChange }: { desktop: boolean; onChange: (value: boolean) => void }) {
+export function DevicePicker({
+  desktop,
+  onChange,
+}: {
+  desktop: boolean;
+  onChange: (value: boolean) => void;
+}) {
   return (
     <div
       role="group"
@@ -53,7 +59,9 @@ function PreviewDevice({
     );
   return compact ? (
     <div className="mx-auto h-[494px] w-[243px]">
-      <PhoneFrame className="max-w-none origin-top-left scale-[.76]">{children}</PhoneFrame>
+      <PhoneFrame className="max-w-none origin-top-left scale-[.76]">
+        {children}
+      </PhoneFrame>
     </div>
   ) : (
     <PhoneFrame className="mx-auto">{children}</PhoneFrame>
@@ -76,15 +84,22 @@ export function PreviewScreen({
   title?: string;
 }) {
   const content = site ? (
-    <MockBioPage site={site} />
+    <BioPage site={site} />
   ) : (
-    <p role="status" className="m-7 rounded-md bg-card p-4 text-sm text-foreground">
+    <p
+      role="status"
+      className="m-7 rounded-md bg-card p-4 text-sm text-foreground"
+    >
       Không tải được bản xem trước.
     </p>
   );
   if (desktop === undefined) return content;
   return (
-    <PreviewDevice desktop={desktop} address={new URL(landingUrl).host + "/" + slug} compact={compact}>
+    <PreviewDevice
+      desktop={desktop}
+      address={new URL(landingUrl).host + "/" + slug}
+      compact={compact}
+    >
       {content}
     </PreviewDevice>
   );
@@ -114,36 +129,12 @@ export function SitePreview({
   );
   if (fullPage) return <main className="h-dvh w-full">{content}</main>;
   return (
-    <section aria-label="Xem trước trang bio" className="grid min-w-0 justify-items-center gap-4">
+    <section
+      aria-label="Xem trước trang bio"
+      className="grid min-w-0 justify-items-center gap-4"
+    >
       <DevicePicker desktop={desktop} onChange={setDesktop} />
       <div className="w-full">{content}</div>
     </section>
-  );
-}
-
-// shortcut: bản xem trước giản lược (hồ sơ + tiêu đề block); thay bằng renderer thật (src/lib/renderer) khi có.
-function MockBioPage({ site }: { site: Site }) {
-  const theme = themeOf(site, templates[site.template] ?? templates.classic);
-  return (
-    <div className="grid min-h-full content-start gap-3 p-6 text-ink" style={{ background: theme.bg, fontFamily: theme.font }}>
-      {site.profile.cover && (
-        /* eslint-disable-next-line @next/next/no-img-element -- ảnh mẫu */
-        <img alt="" src={site.profile.cover} className="h-28 w-full rounded-xl object-cover" />
-      )}
-      <span className="mx-auto mt-2 size-16 rounded-full" style={{ background: theme.accent }} />
-      <h2 className="text-center text-lg font-semibold">{site.profile.title}</h2>
-      {site.profile.subtitle && <p className="-mt-2 text-center text-sm opacity-70">{site.profile.subtitle}</p>}
-      {site.blocks
-        .filter((b) => !b.hidden)
-        .map((b) => (
-          <span
-            key={b.id}
-            className="rounded-full bg-white px-4 py-3 text-center text-sm font-medium shadow-soft"
-            style={{ borderRadius: Number(theme.radius) || undefined }}
-          >
-            {b.title || b.text || b.type}
-          </span>
-        ))}
-    </div>
   );
 }

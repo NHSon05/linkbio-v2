@@ -2,9 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 import { Monitor, Smartphone } from "lucide-react";
-import { themeOf, type Site } from "@/components/dashboard/mock/schema";
+import { themeOf, type Site } from "@/lib/schemas/site";
 import { templates } from "@/components/dashboard/mock/templates";
-import { mockSites } from "@/components/dashboard/mock/data";
 import { BrowserFrame, PhoneFrame } from "@/components/dashboard/device-frame";
 import { Button } from "@/components/ui/button";
 
@@ -76,9 +75,8 @@ export function PreviewScreen({
   compact?: boolean;
   title?: string;
 }) {
-  const config = site ?? mockSites.find((s) => s.slug === slug);
-  const content = config ? (
-    <MockBioPage site={config} />
+  const content = site ? (
+    <MockBioPage site={site} />
   ) : (
     <p role="status" className="m-7 rounded-md bg-card p-4 text-sm text-foreground">
       Không tải được bản xem trước.

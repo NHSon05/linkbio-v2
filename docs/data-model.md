@@ -28,7 +28,15 @@ erDiagram
 
 ### templates
 
-`id uuid PK`, `key text unique not null`, `name text`, `description text`, `default_config jsonb not null`, `schema_version int`, `is_active boolean`, `created_at`. Read-only to ordinary users.
+`id uuid PK`, `key text unique not null` (`classic`, `video-first`, `shop-grid`), `name text`, `description text`, `manifest jsonb not null` (regions, allowed block types, `themeDefaults` — validated by `TemplateSchema`), `default_config jsonb not null` (a `PageConfigSchema` starter), `schema_version int`, `is_active boolean`, `created_at`. Read-only to ordinary users.
+
+### Implementation notes (DB-01..06)
+
+- Migrations: `supabase/migrations/2026112412*.sql`; tests: `supabase/tests/rls_test.sql`.
+- `profiles.username` is null until claimed (ON-01), lowercase `^[a-z0-9][a-z0-9-]{2,29}$`, reserved route names blocked by a check constraint, and locked once set.
+- `page_versions` are append-only (update blocked by trigger); every draft save inserts `revision + 1`. Composite FKs `(pages.id, *_version_id) → page_versions(page_id, id)` enforce that pointers stay within the page.
+- Clients never insert/update `pages` or `page_versions` directly: `create_page(template_key, slug)` and `save_draft(page_id, expected_revision, config)` (security definer, `auth.uid()` checked, PostgREST `PT4xx` error codes: `SLUG_TAKEN`/`REVISION_CONFLICT` → 409, `USERNAME_REQUIRED` → 403). `status`, `desired_version_id`, `live_version_id`, deployments, redirects and events are server-only (service role).
+- Storage bucket `media` is public-read; writes only under `<auth.uid()>/`.
 
 ### pages
 
@@ -36,7 +44,7 @@ erDiagram
 
 ### page_versions
 
-`id uuid PK`, `page_id uuid references pages(id) on delete cascade`, `revision bigint not null`, `schema_version int not null`, `config jsonb not null`, `created_by uuid references profiles(id)`, `created_at`, `unique(page_id,revision)`. Treat published snapshots as immutable. Draft updates can create a new version per save or use a separate mutable draft with revision tracking.
+`id uuid PK`, `page_id uuid references pages(id) on delete cascade`, `revision bigint not null`, `schema_version int not null`, `config jsonb not null` (validated by `PageConfigSchema` in `src/lib/schemas/site.ts`; no slug/owner inside), `created_by uuid references profiles(id)`, `created_at`, `unique(page_id,revision)`. Treat published snapshots as immutable. Draft updates can create a new version per save or use a separate mutable draft with revision tracking.
 
 ### media_assets
 

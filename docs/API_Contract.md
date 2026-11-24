@@ -29,7 +29,7 @@ Next.js Server Actions may implement dashboard writes instead of REST, but must 
 `POST /api/v1/pages`
 
 ```json
-{ "templateKey": "tech-review", "slug": "tech-review" }
+{ "templateKey": "classic", "slug": "tech-review" }
 ```
 
 201:
@@ -57,9 +57,10 @@ Next.js Server Actions may implement dashboard writes instead of REST, but must 
   "expectedRevision": 1,
   "config": {
     "schemaVersion": 1,
-    "templateId": "tech-review",
+    "template": "classic",
     "theme": {},
     "layout": {},
+    "profile": { "title": "Son", "socials": [] },
     "blocks": []
   }
 }
@@ -121,7 +122,18 @@ Next.js Server Actions may implement dashboard writes instead of REST, but must 
 
 ## JSON config contract
 
-`schemaVersion: number`, `templateId: string`, `theme: {primaryColor, backgroundColor, fontFamily, borderRadius}`, `layout: {maxWidth, spacing}`, `blocks: Array<{id, type, order, visible, props, styles, responsive}>`. Block types are an allowlist (`profile`, `social-links`, `banner`, `product-grid`, `carousel`). Values are constrained by Zod; avoid arbitrary CSS and unsafe URLs. Keep `pageId`, `ownerId`, `slug` outside renderer config as database metadata.
+Source of truth: `src/lib/schemas/site.ts` (D-01). Stored shape is `PageConfigSchema`:
+
+- `schemaVersion: 1`
+- `template: string` — template key (`classic`, `video-first`, `shop-grid`)
+- `theme: {bg?, accent?, font?, radius?, button?: "pill" | "rounded"}` — empty = template default
+- `layout: {hero?, main?, footer?}` — each `{blocks: blockId[], variant?: "list" | "grid-2" | "carousel", rank?}`
+- `profile: {title, subtitle?, about?, avatar?, cover?, socials: {type, url}[]}`
+- `blocks: Array<{id, type, title?, text?, url?, thumbnail?, items?, pinned?, hidden?, score?, ...}>` — `type` from `BLOCK_TYPES`; unknown types are skipped by the renderer
+- `catalog?: {products: Product[], collections: {id, name, items: productId[]}[]}`
+- `nav?`, `source?: {platform, pageId}`
+
+Template manifests decide which block types each region accepts. Values are constrained by Zod; no arbitrary CSS/HTML and only `http(s)` product URLs. `pageId`, `ownerId`, `slug` stay outside the stored config as database metadata; the dashboard adds `slug` (`username/pageSlug`) when it reads a page (`SiteSchema`).
 
 ## Internal publishing protocol
 

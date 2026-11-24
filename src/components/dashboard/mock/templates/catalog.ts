@@ -1,4 +1,4 @@
-import { ProductDbSchema, type ProductDb, type Site } from "@/components/dashboard/mock/schema";
+import { ProductDbSchema, type ProductDb, type Site } from "@/lib/schemas/site";
 import samples from "./products.json" with { type: "json" };
 
 const legacy = ProductDbSchema.parse(samples);

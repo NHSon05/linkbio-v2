@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { ArrowUpRight, Link2, Plus, Trash2 } from "lucide-react";
-import type { Site } from "@/components/dashboard/mock/schema";
+import type { Site } from "@/lib/schemas/site";
 import { Panel } from "@/components/dashboard/panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

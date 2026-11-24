@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, Eye, MousePointer2, Percent, ShoppingBag, ChartNoAxesColumn } from "lucide-react";
-import { formatPrice, type Site } from "@/components/dashboard/mock/schema";
+import { formatPrice, type Site } from "@/lib/schemas/site";
 import { catalogFor } from "@/components/dashboard/mock/templates/catalog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/dashboard/segmented";
-import { mockTraffic, type SiteSummary } from "@/components/dashboard/mock/data";
+import { mockTraffic } from "@/components/dashboard/mock/data";
+import type { SiteSummary } from "@/lib/schemas/site";
+import { CreatePage } from "./create-page";
+import { Panel } from "@/components/dashboard/panel";
 import { workspaceUrl } from "./navigation";
 import { SiteGallery } from "./site-gallery";
 import { ProductThumb } from "./products";
@@ -49,7 +52,17 @@ export function MetricCards({ views, clicks, count }: { views: number | null; cl
   );
 }
 
-export function HomeOverview({ site, sites, landingUrl }: { site: Site; sites: SiteSummary[]; landingUrl: string }) {
+export function HomeOverview({
+  site,
+  sites,
+  drafts,
+  landingUrl,
+}: {
+  site: Site;
+  sites: SiteSummary[];
+  drafts: Record<string, Site>;
+  landingUrl: string;
+}) {
   const rows = mockTraffic(site.slug);
   const error = "";
   const [period, setPeriod] = useState("7");
@@ -179,7 +192,10 @@ export function HomeOverview({ site, sites, landingUrl }: { site: Site; sites: S
           )}
         </Card>
       </div>
-      <SiteGallery sites={sites} active={site} landingUrl={landingUrl} />
+      <SiteGallery sites={sites} drafts={drafts} active={site} landingUrl={landingUrl} />
+      <Panel title="Tạo trang mới" hint="Mỗi trang có slug riêng: /{username}/{slug}.">
+        <CreatePage />
+      </Panel>
     </div>
   );
 }

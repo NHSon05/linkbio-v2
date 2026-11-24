@@ -1,6 +1,13 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import Editor from "@/components/dashboard/editor";
-import { dashboardOrigin, getSupabaseEnv, requireUser } from "@/lib/auth";
+import {
+  dashboardOrigin,
+  getSupabaseEnv,
+  getUsername,
+  requireUser,
+} from "@/lib/auth";
+import { listPageDrafts } from "@/lib/pages";
 
 export default function Page() {
   return (
@@ -12,8 +19,22 @@ export default function Page() {
 
 async function Dashboard() {
   if (!getSupabaseEnv()) {
-    return <main className="p-8 text-sm">Thêm cấu hình Supabase vào .env.</main>;
+    return (
+      <main className="p-8 text-sm">Thêm cấu hình Supabase vào .env.</main>
+    );
   }
   const user = await requireUser();
-  return <Editor key={user.id} email={user.email ?? ""} landingUrl={dashboardOrigin()} />;
+  // ON-01: a username is needed before any page (/{username}/{slug}) can exist.
+  const username = await getUsername(user.id);
+  if (!username) redirect("/onboarding");
+  const pages = await listPageDrafts(user.id, username);
+  return (
+    // Remount when the page list changes (e.g. after create_page) so local drafts reset.
+    <Editor
+      key={user.id + pages.map((page) => page.id).join()}
+      email={user.email ?? ""}
+      landingUrl={dashboardOrigin()}
+      pages={pages}
+    />
+  );
 }

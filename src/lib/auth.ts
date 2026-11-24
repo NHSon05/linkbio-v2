@@ -7,7 +7,9 @@ import { connection, NextResponse } from "next/server";
 
 export function getSupabaseEnv() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const key =
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   return url && key ? { url, key } : null;
 }
 
@@ -20,7 +22,9 @@ export function supabaseEnv() {
 // Các yêu cầu gửi email không cần ghi mã PKCE hoặc phiên vào cookie.
 export function createEmailRequestClient() {
   const { url, key } = supabaseEnv();
-  return createClient(url, key, { auth: { flowType: "pkce", persistSession: false, autoRefreshToken: false } });
+  return createClient(url, key, {
+    auth: { flowType: "pkce", persistSession: false, autoRefreshToken: false },
+  });
 }
 
 /** Supabase client bound to the session cookies of the current request. */
@@ -32,7 +36,8 @@ export async function createSessionClient() {
       getAll: () => store.getAll(),
       setAll(cookiesToSet) {
         try {
-          for (const { name, value, options } of cookiesToSet) store.set(name, value, options);
+          for (const { name, value, options } of cookiesToSet)
+            store.set(name, value, options);
         } catch {
           // Server Components cannot set cookies; proxy.ts refreshes the session instead.
         }
@@ -51,10 +56,26 @@ export async function requireUser() {
   return data.user;
 }
 
+/** The signed-in user's claimed username, or null before onboarding (ON-01). */
+export async function getUsername(userId: string) {
+  const supabase = await createSessionClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", userId)
+    .maybeSingle();
+  // Fail loudly (e.g. migrations not applied) instead of looping through /onboarding.
+  if (error) throw new Error("Không đọc được hồ sơ: " + error.message);
+  return (data?.username as string | null | undefined) ?? null;
+}
+
 /** Only allow redirects to paths on this site. */
-export function safeNext(value: FormDataEntryValue | string | null | undefined) {
+export function safeNext(
+  value: FormDataEntryValue | string | null | undefined,
+) {
   const next = typeof value === "string" ? value : "";
-  if (!next.startsWith("/") || next.startsWith("//") || /[\\\n\r\t]/.test(next)) return "/";
+  if (!next.startsWith("/") || next.startsWith("//") || /[\\\n\r\t]/.test(next))
+    return "/";
 
   const base = "https://dashboard.invalid";
   const url = new URL(next, base);
@@ -75,7 +96,10 @@ export function dashboardOrigin() {
 }
 
 export function authRedirect(path: string, status: 303 | 307) {
-  return NextResponse.redirect(new URL(safeNext(path), dashboardOrigin()), { status, headers: AUTH_LINK_HEADERS });
+  return NextResponse.redirect(new URL(safeNext(path), dashboardOrigin()), {
+    status,
+    headers: AUTH_LINK_HEADERS,
+  });
 }
 
 export function googleLoginError(next: string) {

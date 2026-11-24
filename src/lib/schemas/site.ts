@@ -1,6 +1,6 @@
 /**
- * Schema dùng chung cho landing (Astro) và dashboard (Next.js) — plan mục 4, 5, 7.
- * Port logic từ demo/assets/render.js: theme, layout, vùng, xếp hạng.
+ * Page config schema v1 — dùng chung cho dashboard, renderer và public page.
+ * Gốc từ bio-link (packages/schema): theme, layout, vùng, xếp hạng.
  */
 import { z } from "zod";
 
@@ -105,12 +105,16 @@ export const ProductSchema = z.object({
 });
 export const ProductDbSchema = z.object({
   products: z.array(ProductSchema),
-  collections: z.array(z.object({ id: z.string(), name: z.string(), items: z.array(z.string()) })),
+  collections: z.array(
+    z.object({ id: z.string(), name: z.string(), items: z.array(z.string()) }),
+  ),
 });
 export type Product = z.infer<typeof ProductSchema>;
 export type ProductDb = z.infer<typeof ProductDbSchema>;
 
 // ---------- Site (1 slug) ----------
+export const SCHEMA_VERSION = 1;
+
 const RegionLayoutSchema = z.object({
   blocks: z.array(z.string()).default([]),
   variant: z.enum(VARIANTS).optional(),
@@ -118,8 +122,14 @@ const RegionLayoutSchema = z.object({
 });
 
 export const SiteSchema = z.object({
+  schemaVersion: z.literal(SCHEMA_VERSION).default(SCHEMA_VERSION),
   // Đường dẫn công khai "tên-người-dùng/tên-trang" (AD-13).
-  slug: z.string().regex(/^[a-z0-9][a-z0-9-]*\/[a-z0-9-]+$/, "slug có dạng tên-người-dùng/tên-trang (a-z, 0-9, -)"),
+  slug: z
+    .string()
+    .regex(
+      /^[a-z0-9][a-z0-9-]*\/[a-z0-9-]+$/,
+      "slug có dạng tên-người-dùng/tên-trang (a-z, 0-9, -)",
+    ),
   source: z.object({ platform: z.string(), pageId: z.string() }).optional(),
   template: z.string().default("classic"),
   theme: ThemeSchema.default({}),
@@ -137,13 +147,56 @@ export const SiteSchema = z.object({
     title: z.string(),
     subtitle: z.string().optional(),
     about: z.string().optional(),
-    socials: z.array(z.object({ type: z.string(), url: z.string() })).default([]),
+    socials: z
+      .array(z.object({ type: z.string(), url: z.string() }))
+      .default([]),
   }),
   blocks: z.array(BlockSchema).default([]),
   catalog: ProductDbSchema.optional(),
   updatedAt: z.string().optional(),
 });
 export type Site = z.infer<typeof SiteSchema>;
+
+/** Dạng lưu trong page_versions.config: slug/updatedAt là metadata của bảng pages, không lưu trong config. */
+export const PageConfigSchema = SiteSchema.omit({
+  slug: true,
+  updatedAt: true,
+});
+export type PageConfig = z.infer<typeof PageConfigSchema>;
+
+/** Rebuilds the editor's Site from a stored config plus the page's public path. */
+export function siteFromConfig(
+  config: unknown,
+  username: string,
+  pageSlug: string,
+): Site {
+  return SiteSchema.parse({
+    ...(config as object),
+    slug: `${username}/${pageSlug}`,
+  });
+}
+
+/** What the dashboard shows for a page in lists, the slug switcher and search. */
+export type SiteSummary = {
+  slug: string;
+  title: string;
+  template: string;
+  platform: string | null;
+  canEdit: boolean;
+  /** Set once the page has a live version (Sprint 3). */
+  publishedSlug: string | null;
+};
+
+export function summaryOf(site: Site, published = false): SiteSummary {
+  return {
+    slug: site.slug,
+    title: site.profile.title,
+    template: site.template,
+    platform: site.source?.platform ?? null,
+    canEdit: true,
+    publishedSlug: published ? site.slug : null,
+  };
+}
 
 // ---------- Logic (giữ giống demo/assets/render.js) ----------
 const WIDE_BY_DEFAULT = new Set<string>([
@@ -165,7 +218,10 @@ export function isWide(b: Block): boolean {
   return WIDE_BY_DEFAULT.has(b.type);
 }
 
-export function templateOf(site: Site, templates: Record<string, Template>): Template {
+export function templateOf(
+  site: Site,
+  templates: Record<string, Template>,
+): Template {
   const t = templates[site.template] ?? templates.classic;
   if (!t) throw new Error(`Không tìm thấy template "${site.template}"`);
   return t;
@@ -174,7 +230,8 @@ export function templateOf(site: Site, templates: Record<string, Template>): Tem
 /** Theme = themeDefaults của template + phần slug ghi đè (bỏ giá trị rỗng). */
 export function themeOf(site: Site, tpl: Template): Theme {
   const out: Record<string, unknown> = { ...tpl.themeDefaults };
-  for (const [k, v] of Object.entries(site.theme ?? {})) if (v !== "" && v != null) out[k] = v;
+  for (const [k, v] of Object.entries(site.theme ?? {}))
+    if (v !== "" && v != null) out[k] = v;
   return out as Theme;
 }
 
@@ -182,12 +239,24 @@ export function themeOf(site: Site, tpl: Template): Theme {
 export function layoutOf(site: Site): Required<Site["layout"]> {
   const L = site.layout ?? {};
   if (L.hero || L.main || L.footer) {
-    return { hero: L.hero ?? { blocks: [] }, main: L.main ?? { blocks: [] }, footer: L.footer ?? { blocks: [] } };
+    return {
+      hero: L.hero ?? { blocks: [] },
+      main: L.main ?? { blocks: [] },
+      footer: L.footer ?? { blocks: [] },
+    };
   }
-  return { hero: { blocks: [] }, main: { blocks: site.blocks.map((b) => b.id) }, footer: { blocks: [] } };
+  return {
+    hero: { blocks: [] },
+    main: { blocks: site.blocks.map((b) => b.id) },
+    footer: { blocks: [] },
+  };
 }
 
-export function variantOf(site: Site, tpl: Template, name: RegionName): Variant {
+export function variantOf(
+  site: Site,
+  tpl: Template,
+  name: RegionName,
+): Variant {
   const spec = tpl.regions[name];
   const v = layoutOf(site)[name]?.variant;
   const vs = spec.variants ?? ["list"];
@@ -203,7 +272,9 @@ export function rankOf(site: Site, tpl: Template, name: RegionName): boolean {
 }
 
 /** Quy tắc xếp: pinned → viral score → mới nhất → thứ tự gốc. */
-export function sortBlocks<T extends Pick<Block, "pinned" | "score" | "publishedAt">>(blocks: T[]): T[] {
+export function sortBlocks<
+  T extends Pick<Block, "pinned" | "score" | "publishedAt">,
+>(blocks: T[]): T[] {
   return blocks
     .map((b, i) => ({ b, i }))
     .sort((x, y) => {
@@ -222,18 +293,28 @@ export function sortBlocks<T extends Pick<Block, "pinned" | "score" | "published
 }
 
 /** Block của 1 vùng: lọc theo allow, bỏ block ẩn, xếp hạng trong vùng, cắt theo max. */
-export function regionBlocks(site: Site, tpl: Template, name: RegionName): Block[] {
+export function regionBlocks(
+  site: Site,
+  tpl: Template,
+  name: RegionName,
+): Block[] {
   const spec = tpl.regions[name];
   const byId = new Map(site.blocks.map((b) => [b.id, b]));
   let list = (layoutOf(site)[name]?.blocks ?? [])
     .map((id) => byId.get(id))
-    .filter((b): b is Block => !!b && !b.hidden && (!spec.allow || spec.allow.includes(b.type)));
+    .filter(
+      (b): b is Block =>
+        !!b && !b.hidden && (!spec.allow || spec.allow.includes(b.type)),
+    );
   if (rankOf(site, tpl, name)) list = sortBlocks(list);
   if (spec.max) list = list.slice(0, spec.max);
   return list;
 }
 
-export function formatPrice(price: Product["price"], currency?: string): string {
+export function formatPrice(
+  price: Product["price"],
+  currency?: string,
+): string {
   if (price == null || price === "") return "";
   const n = Number(price);
   if (Number.isNaN(n)) return String(price);
@@ -246,5 +327,8 @@ export function luminance(hex?: string): number {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex ?? "");
   if (!m) return 0;
   const n = parseInt(m[1], 16);
-  return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  return (
+    (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) /
+    255
+  );
 }

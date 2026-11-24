@@ -1,4 +1,4 @@
-import type { Site } from "@/components/dashboard/mock/schema";
+import type { Site } from "@/lib/schemas/site";
 import { Panel } from "@/components/dashboard/panel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

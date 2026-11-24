@@ -1,5 +1,5 @@
 // Dữ liệu mẫu cho dashboard UI. Chưa nối API: thay file này khi có backend.
-import { SiteSchema, type Site } from "./schema";
+import { SiteSchema, type Site } from "@/lib/schemas/site";
 import shop from "./sites/fanpage-abc.json";
 import artist from "./sites/beat-artist.json";
 import food from "./sites/ig-food.json";

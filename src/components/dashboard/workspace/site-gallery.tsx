@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Pencil } from "lucide-react";
-import type { Site } from "@/components/dashboard/mock/schema";
+import type { Site } from "@/lib/schemas/site";
 import { templates } from "@/components/dashboard/mock/templates";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

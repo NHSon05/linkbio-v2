@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpRight, Undo2 } from "lucide-react";
 import { toast } from "sonner";
-import type { Site } from "@/components/dashboard/mock/schema";
+import type { Site } from "@/lib/schemas/site";
 import { mockSites, summaryOf } from "@/components/dashboard/mock/data";
 import { StatusPill } from "@/components/dashboard/panel";
 import { Button } from "@/components/ui/button";

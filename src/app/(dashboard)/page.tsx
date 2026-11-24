@@ -1,6 +1,12 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import Editor from "@/components/dashboard/editor";
-import { dashboardOrigin, getSupabaseEnv, requireUser } from "@/lib/auth";
+import {
+  dashboardOrigin,
+  getSupabaseEnv,
+  getUsername,
+  requireUser,
+} from "@/lib/auth";
 
 export default function Page() {
   return (
@@ -12,8 +18,18 @@ export default function Page() {
 
 async function Dashboard() {
   if (!getSupabaseEnv()) {
-    return <main className="p-8 text-sm">Thêm cấu hình Supabase vào .env.</main>;
+    return (
+      <main className="p-8 text-sm">Thêm cấu hình Supabase vào .env.</main>
+    );
   }
   const user = await requireUser();
-  return <Editor key={user.id} email={user.email ?? ""} landingUrl={dashboardOrigin()} />;
+  // ON-01: a username is needed before any page (/{username}/{slug}) can exist.
+  if (!(await getUsername(user.id))) redirect("/onboarding");
+  return (
+    <Editor
+      key={user.id}
+      email={user.email ?? ""}
+      landingUrl={dashboardOrigin()}
+    />
+  );
 }

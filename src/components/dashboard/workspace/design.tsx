@@ -1,4 +1,4 @@
-import { REGIONS, layoutOf, type Block, type RegionName, type Site } from "@/components/dashboard/mock/schema";
+import { REGIONS, layoutOf, type Block, type RegionName, type Site } from "@/lib/schemas/site";
 import { templates } from "@/components/dashboard/mock/templates";
 import { TemplatePicker } from "@/components/dashboard/workspace/template-picker";
 import { Badge } from "@/components/ui/badge";

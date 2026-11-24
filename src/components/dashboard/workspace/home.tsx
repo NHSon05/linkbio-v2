@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, Eye, MousePointer2, Percent, ShoppingBag, ChartNoAxesColumn } from "lucide-react";
-import { formatPrice, type Site } from "@/components/dashboard/mock/schema";
+import { formatPrice, type Site } from "@/lib/schemas/site";
 import { catalogFor } from "@/components/dashboard/mock/templates/catalog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

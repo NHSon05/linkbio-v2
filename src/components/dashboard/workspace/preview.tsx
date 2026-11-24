@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Monitor, Smartphone } from "lucide-react";
-import { themeOf, type Site } from "@/components/dashboard/mock/schema";
+import { themeOf, type Site } from "@/lib/schemas/site";
 import { templates } from "@/components/dashboard/mock/templates";
 import { mockSites } from "@/components/dashboard/mock/data";
 import { BrowserFrame, PhoneFrame } from "@/components/dashboard/device-frame";

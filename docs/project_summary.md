@@ -36,6 +36,8 @@ Update this file after each completed task: date, task ID, changed files, verifi
 
 ## Change log
 
+- 2026-11-24 — Migrations 20261124120000..120500 pushed to `link-bio-tree` (ufmapcififfzfmywivhm). Verified via REST with the anon key: 3 templates readable; pages, page_versions, products, page_events, deployments return 42501; `create_page` denied for anon. Full `rls_test.sql` not run against production.
+
 - 2026-11-24 — ON-01: `/onboarding` username claim; dashboard redirects there until `profiles.username` is set. Verified: tsc, eslint, build, signed-out redirect. Migration push to `ufmapcififfzfmywivhm` blocked: the logged-in Supabase CLI account lacks access.
 
 - 2026-11-24 — DB-01..06: six migrations + RLS test script. Verified on a local Postgres 18 with Supabase auth/storage stubs (Docker was unavailable): all migrations apply, all RLS assertions pass, and the suite fails when a leak is injected. Not yet run on real Supabase (Postgres 17) nor pushed to the hosted project.

@@ -164,6 +164,40 @@ export const PageConfigSchema = SiteSchema.omit({
 });
 export type PageConfig = z.infer<typeof PageConfigSchema>;
 
+/** Rebuilds the editor's Site from a stored config plus the page's public path. */
+export function siteFromConfig(
+  config: unknown,
+  username: string,
+  pageSlug: string,
+): Site {
+  return SiteSchema.parse({
+    ...(config as object),
+    slug: `${username}/${pageSlug}`,
+  });
+}
+
+/** What the dashboard shows for a page in lists, the slug switcher and search. */
+export type SiteSummary = {
+  slug: string;
+  title: string;
+  template: string;
+  platform: string | null;
+  canEdit: boolean;
+  /** Set once the page has a live version (Sprint 3). */
+  publishedSlug: string | null;
+};
+
+export function summaryOf(site: Site, published = false): SiteSummary {
+  return {
+    slug: site.slug,
+    title: site.profile.title,
+    template: site.template,
+    platform: site.source?.platform ?? null,
+    canEdit: true,
+    publishedSlug: published ? site.slug : null,
+  };
+}
+
 // ---------- Logic (giữ giống demo/assets/render.js) ----------
 const WIDE_BY_DEFAULT = new Set<string>([
   "hero-video",

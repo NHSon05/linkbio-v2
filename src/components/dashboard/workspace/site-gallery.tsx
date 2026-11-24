@@ -3,16 +3,25 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Pencil } from "lucide-react";
-import type { Site } from "@/lib/schemas/site";
+import type { Site, SiteSummary } from "@/lib/schemas/site";
 import { templates } from "@/components/dashboard/mock/templates";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { SiteSummary } from "@/components/dashboard/mock/data";
 import { workspaceUrl } from "./navigation";
 import { DevicePicker, PreviewScreen } from "./preview";
 
-export function SiteGallery({ sites, active, landingUrl }: { sites: SiteSummary[]; active: Site; landingUrl: string }) {
+export function SiteGallery({
+  sites,
+  drafts,
+  active,
+  landingUrl,
+}: {
+  sites: SiteSummary[];
+  drafts: Record<string, Site>;
+  active: Site;
+  landingUrl: string;
+}) {
   const [desktop, setDesktop] = useState(false);
   const [limit, setLimit] = useState(4);
   const ordered = [...sites.filter((s) => s.slug === active.slug), ...sites.filter((s) => s.slug !== active.slug)];
@@ -58,7 +67,7 @@ export function SiteGallery({ sites, active, landingUrl }: { sites: SiteSummary[
                 </Button>
               </div>
               <PreviewScreen
-                site={selected ? active : undefined}
+                site={selected ? active : drafts[s.slug]}
                 slug={s.slug}
                 landingUrl={landingUrl}
                 desktop={desktop}

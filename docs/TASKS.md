@@ -6,6 +6,11 @@ Statuses: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`. Owner is the responsible age
 
 | ID        | Task                                                                                                                                                                          | Evidence                                                                                                                                    |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| D-02      | pnpm only: removed `package-lock.json`, `packageManager: pnpm@12.14.0`, esbuild build approved in `pnpm-workspace.yaml`                                                       | `pnpm install --frozen-lockfile` passes (2026-11-24)                                                                                        |
+| OPS-01    | CI (`.github/workflows/ci.yml`): lint, typecheck, Vitest, build on every push; `.claude/**` excluded from ESLint                                                              | All four steps pass locally; first GitHub run on push of `feat/sprint-1`                                                                    |
+| FE-02     | `src/lib/pages.ts` `listPageDrafts()` (owner filter + RLS)                                                                                                                    | Typecheck/build pass. Not yet run against live data                                                                                         |
+| FE-03     | Dashboard on real pages; empty state + "Tạo trang mới" via `create_page()` (`src/app/(dashboard)/actions.ts`); mock sample sites removed                                      | Screenshots of empty state and one-page editor. Not yet run against live data                                                               |
+| FE-04     | "Lưu nháp" → `save_draft()` with revision; 409 shows reload message; "Xuất bản" disabled until Sprint 3                                                                       | Unit tests for schema round-trip (14 Vitest tests). Not yet run against live data                                                           |
 | D-01      | Page config schema v1 in `src/lib/schemas/site.ts` (+ `schemaVersion`, `PageConfigSchema`); docs updated                                                                      | `tsc`, `eslint`, `next build` pass (2026-11-24)                                                                                             |
 | DB-01..06 | Migrations in `supabase/migrations/2026112412*` (profiles, templates, pages/versions + `create_page`/`save_draft`, media/products/Storage, deployments/redirects/events, RLS) | Applied on local Postgres 18 with Supabase stubs; `supabase/tests/rls_test.sql` 40+ assertions pass and fail on injected leaks (2026-11-24) |
 | ON-01     | `/onboarding` username claim (`src/app/(auth)/onboarding`, `UsernameSchema`); dashboard redirects there until a username exists                                               | `tsc`, `eslint`, `next build` pass; signed-out `/onboarding` → `/login`. Not tested end-to-end yet (migrations now on Supabase)             |
@@ -15,10 +20,9 @@ Statuses: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`. Owner is the responsible age
 
 ## Phase 0 — Decisions
 
-| ID   | Priority | Owner  | Task                                                                     | Depends on | Acceptance                             |
-| ---- | -------- | ------ | ------------------------------------------------------------------------ | ---------- | -------------------------------------- |
-| D-02 | P0       | devops | Use pnpm only; drop `package-lock.json`; decide on `pnpm-workspace.yaml` | —          | Single lockfile; clean install + build |
-| D-03 | P0       | devops | Supabase: Google redirect URI, Redirect URLs (local + prod)              | —          | Google login reaches `/` locally       |
+| ID   | Priority | Owner  | Task                                                        | Depends on | Acceptance                       |
+| ---- | -------- | ------ | ----------------------------------------------------------- | ---------- | -------------------------------- |
+| D-03 | P0       | devops | Supabase: Google redirect URI, Redirect URLs (local + prod) | —          | Google login reaches `/` locally |
 
 ## Phase 1 — Database
 
@@ -30,14 +34,11 @@ ON-01 done (see table above).
 
 ## Phase 3 — Dashboard on real data
 
-| ID    | Priority | Owner    | Task                                                                   | Depends on   | Acceptance                               |
-| ----- | -------- | -------- | ---------------------------------------------------------------------- | ------------ | ---------------------------------------- |
-| FE-02 | P0       | frontend | Server data layer `src/lib/pages.ts` (list pages, read draft)          | DB-03        | Only caller's pages returned             |
-| FE-03 | P0       | frontend | Dashboard reads real pages; empty state + create page (template, slug) | FE-02        | Created page appears after refresh       |
-| FE-04 | P0       | frontend | Save draft with `expectedRevision`; 409 conflict UI                    | FE-03        | Refresh keeps edits; stale save rejected |
-| FE-05 | P1       | frontend | Image upload to Storage (replace blob URL in `image-field.tsx`)        | DB-04        | Uploaded image survives refresh          |
-| FE-06 | P1       | frontend | Products CRUD persisted                                                | DB-04, FE-04 | Products survive refresh                 |
-| FE-07 | P1       | frontend | Rename slug (writes `url_redirects`), delete page                      | DB-05, FE-03 | Old URL redirects; delete removes page   |
+| ID    | Priority | Owner    | Task                                                            | Depends on   | Acceptance                             |
+| ----- | -------- | -------- | --------------------------------------------------------------- | ------------ | -------------------------------------- |
+| FE-05 | P1       | frontend | Image upload to Storage (replace blob URL in `image-field.tsx`) | DB-04        | Uploaded image survives refresh        |
+| FE-06 | P1       | frontend | Products CRUD persisted                                         | DB-04, FE-04 | Products survive refresh               |
+| FE-07 | P1       | frontend | Rename slug (writes `url_redirects`), delete page               | DB-05, FE-03 | Old URL redirects; delete removes page |
 
 ## Phase 4 — Renderer
 
@@ -63,14 +64,13 @@ ON-01 done (see table above).
 
 ## Phase 7 — QA & CI
 
-| ID     | Priority | Owner  | Task                                                             | Depends on | Acceptance  |
-| ------ | -------- | ------ | ---------------------------------------------------------------- | ---------- | ----------- |
-| QA-01  | P0       | qa     | Playwright: login → create → edit → publish; two users same slug | PUB-02     | Tests green |
-| OPS-01 | P1       | devops | CI: lint, typecheck, build, tests                                | —          | CI passes   |
+| ID    | Priority | Owner | Task                                                             | Depends on | Acceptance  |
+| ----- | -------- | ----- | ---------------------------------------------------------------- | ---------- | ----------- |
+| QA-01 | P0       | qa    | Playwright: login → create → edit → publish; two users same slug | PUB-02     | Tests green |
 
 ## Sprints
 
-One-week sprints, one developer. Each sprint depends on the previous one. Status lives in the phase tables above.
+One-week sprints, one developer. **Sprint 1:** code done except D-03 (Supabase dashboard setting) and the live two-account check. Each sprint depends on the previous one. Status lives in the phase tables above.
 
 | Sprint | Goal                                                                             | Tasks                                                    | Demo / exit                                                                     |
 | ------ | -------------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------- |

@@ -33,8 +33,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import type { SiteSummary } from "@/components/dashboard/mock/data";
-import { Badge } from "@/components/ui/badge";
+import type { SiteSummary } from "@/lib/schemas/site";
 import { signOut } from "@/app/(auth)/login/actions";
 
 export const sections = [
@@ -188,18 +187,11 @@ function ShellContents({ email, sites, slug, view, saving, chooseSite, children 
               ⌘ K
             </kbd>
           </Button>
-          <Badge
-              variant="secondary"
-              title="Các thay đổi được lưu trong trình duyệt này."
-              className="ml-auto shrink-0 rounded-full bg-accent px-2 text-2xs text-foreground"
-            >
-              Dữ liệu mẫu
-            </Badge>
           {current && (
             <Select value={slug} disabled={saving} onValueChange={chooseSite}>
               <SelectTrigger
                 aria-label="Chọn slug"
-                className={"max-w-[39%] gap-2 rounded-full bg-muted px-3"}
+                className="ml-auto max-w-[39%] gap-2 rounded-full bg-muted px-3"
               >
                 <span className="size-2 shrink-0 rounded-full bg-brand" />
                 <span className="truncate">/{slug}</span>

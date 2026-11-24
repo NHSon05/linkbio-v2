@@ -5,19 +5,27 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpRight, Undo2 } from "lucide-react";
 import { toast } from "sonner";
-import type { Site } from "@/lib/schemas/site";
-import { mockSites, summaryOf } from "@/components/dashboard/mock/data";
-import { StatusPill } from "@/components/dashboard/panel";
+import { saveDraft } from "@/app/(dashboard)/actions";
+import type { PageDraft } from "@/lib/pages";
+import { summaryOf, type Site } from "@/lib/schemas/site";
+import { Panel, StatusPill } from "@/components/dashboard/panel";
 import { Button } from "@/components/ui/button";
+import { CreatePage } from "@/components/dashboard/workspace/create-page";
 import { Design } from "@/components/dashboard/workspace/design";
 import { HomeOverview } from "@/components/dashboard/workspace/home";
-import { sections, WorkspaceShell, workspaceUrl } from "@/components/dashboard/workspace/navigation";
+import {
+  sections,
+  WorkspaceShell,
+  workspaceUrl,
+} from "@/components/dashboard/workspace/navigation";
 import { SitePreview } from "@/components/dashboard/workspace/preview";
-import { ProductManager, type UpdateDraft } from "@/components/dashboard/workspace/products";
+import {
+  ProductManager,
+  type UpdateDraft,
+} from "@/components/dashboard/workspace/products";
 import { Profile } from "@/components/dashboard/workspace/profile";
 import { SocialLinks } from "@/components/dashboard/workspace/social-links";
 
-const initial = Object.fromEntries(mockSites.map((site) => [site.slug, site]));
 const headings = {
   home: "Tổng quan",
   bio: "Link in bio",
@@ -26,42 +34,99 @@ const headings = {
   products: "Sản phẩm affiliate",
 };
 
-/** Dashboard UI chạy trên dữ liệu mẫu: bản nháp chỉ nằm trong state, chưa lưu về server. */
-export default function Editor({ email, landingUrl }: { email: string; landingUrl: string }) {
+const bySlug = <T,>(pages: PageDraft[], pick: (page: PageDraft) => T) =>
+  Object.fromEntries(pages.map((page) => [page.site.slug, pick(page)]));
+
+/** Dashboard editor: drafts live in state until "Lưu nháp" calls save_draft() (FE-04). */
+export default function Editor({
+  email,
+  landingUrl,
+  pages,
+}: {
+  email: string;
+  landingUrl: string;
+  pages: PageDraft[];
+}) {
   const params = useSearchParams();
   const view = sections.find((s) => s.id === params.get("tab"))?.id ?? "home";
-  const [saved, setSaved] = useState<Record<string, Site>>(initial);
-  const [drafts, setDrafts] = useState<Record<string, Site>>(initial);
-  const sites = Object.values(drafts).map(summaryOf);
-  const slug = drafts[params.get("slug") ?? ""] ? params.get("slug")! : mockSites[0].slug;
-  const draft = drafts[slug];
-  const dirty = JSON.stringify(saved[slug]) !== JSON.stringify(draft);
+  const [saved, setSaved] = useState<Record<string, Site>>(() =>
+    bySlug(pages, (p) => p.site),
+  );
+  const [drafts, setDrafts] = useState<Record<string, Site>>(() =>
+    bySlug(pages, (p) => p.site),
+  );
+  const [revisions, setRevisions] = useState<Record<string, number>>(() =>
+    bySlug(pages, (p) => p.revision),
+  );
+  const [saving, setSaving] = useState(false);
+  const meta = bySlug(pages, (p) => p);
+  const sites = pages.map((page) =>
+    summaryOf(drafts[page.site.slug], page.published),
+  );
+  const slug = drafts[params.get("slug") ?? ""]
+    ? params.get("slug")!
+    : pages[0]?.site.slug;
+  const draft = slug ? drafts[slug] : undefined;
+  const dirty = !!slug && JSON.stringify(saved[slug]) !== JSON.stringify(draft);
 
-  const update: UpdateDraft = (fn) =>
+  const update: UpdateDraft = (fn) => {
+    if (!slug || saving) return;
     setDrafts((prev) => {
       const next = structuredClone(prev[slug]);
       fn(next);
       return { ...prev, [slug]: next };
     });
-  function save(publish: boolean) {
-    setSaved((prev) => ({ ...prev, [slug]: draft }));
-    toast.success(publish ? "Đã xuất bản (dữ liệu mẫu)." : "Đã lưu bản nháp (dữ liệu mẫu).");
+  };
+  async function save() {
+    if (!slug || !draft || saving) return;
+    setSaving(true);
+    try {
+      const result = await saveDraft(meta[slug].id, revisions[slug], draft);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      setRevisions((prev) => ({ ...prev, [slug]: result.revision }));
+      setSaved((prev) => ({ ...prev, [slug]: draft }));
+      toast.success("Đã lưu bản nháp.");
+    } catch {
+      toast.error("Không kết nối được máy chủ. Vui lòng thử lại.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <WorkspaceShell
       email={email}
       sites={sites}
-      slug={slug}
+      slug={slug ?? ""}
       view={view}
-      saving={false}
+      saving={saving}
       chooseSite={(value) => {
+        if (saving) return false;
         window.history.pushState(null, "", workspaceUrl(view, value));
         return true;
       }}
     >
-      {view === "home" ? (
-        <HomeOverview key={slug} site={draft} sites={sites} landingUrl={landingUrl} />
+      {!slug || !draft ? (
+        <div className="grid max-w-3xl gap-5">
+          <h1 className="workspace-title">Tạo trang đầu tiên</h1>
+          <Panel
+            title="Chọn mẫu và slug"
+            hint="Trang sẽ có địa chỉ /{username}/{slug}."
+          >
+            <CreatePage />
+          </Panel>
+        </div>
+      ) : view === "home" ? (
+        <HomeOverview
+          key={slug}
+          site={draft}
+          sites={sites}
+          drafts={drafts}
+          landingUrl={landingUrl}
+        />
       ) : (
         <div key={slug} className="grid gap-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -71,7 +136,7 @@ export default function Editor({ email, landingUrl }: { email: string; landingUr
                 {draft.profile.title} · /{slug}
               </p>
             </div>
-            {view === "website" && (
+            {view === "website" && meta[slug].published && (
               <Button asChild>
                 <Link href={"/" + slug} target="_blank" rel="noreferrer">
                   Mở trang công khai
@@ -81,21 +146,48 @@ export default function Editor({ email, landingUrl }: { email: string; landingUr
             )}
           </div>
           {view === "website" ? (
-            <SitePreview key={"published-" + slug} site={saved[slug]} landingUrl={landingUrl} published />
+            meta[slug].published ? (
+              <SitePreview
+                key={"published-" + slug}
+                site={saved[slug]}
+                landingUrl={landingUrl}
+                published
+              />
+            ) : (
+              <Panel
+                title="Trang chưa được xuất bản"
+                hint="Xuất bản sẽ có ở Sprint 3. Xem bản nháp ở tab Link in bio."
+              />
+            )
           ) : (
             <>
               <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(310px,1fr)]">
                 {view === "products" ? (
-                  <ProductManager site={draft} update={update} locked={false} landingUrl={landingUrl} />
+                  <ProductManager
+                    site={draft}
+                    update={update}
+                    locked={saving}
+                    landingUrl={landingUrl}
+                  />
                 ) : (
-                  <fieldset className="grid min-w-0 gap-4" aria-label="Nội dung trang">
+                  <fieldset
+                    disabled={saving}
+                    className="grid min-w-0 gap-4"
+                    aria-label="Nội dung trang"
+                  >
                     {view === "bio" && (
                       <>
-                        <SocialLinks site={draft} update={update} locked={false} />
+                        <SocialLinks
+                          site={draft}
+                          update={update}
+                          locked={saving}
+                        />
                         <Profile draft={draft} update={update} />
                       </>
                     )}
-                    {view === "slug" && <Design draft={draft} update={update} locked={false} />}
+                    {view === "slug" && (
+                      <Design draft={draft} update={update} locked={saving} />
+                    )}
                   </fieldset>
                 )}
                 <div className="min-w-0 xl:sticky xl:top-20">
@@ -103,7 +195,9 @@ export default function Editor({ email, landingUrl }: { email: string; landingUr
                 </div>
               </div>
               <footer className="sticky bottom-0 z-[5] flex flex-wrap items-center gap-2 rounded-lg border bg-card/95 px-3 py-2 shadow-soft backdrop-blur-sm">
-                <StatusPill dirty={dirty}>{dirty ? "Có thay đổi chưa lưu" : "Đã lưu"}</StatusPill>
+                <StatusPill dirty={dirty}>
+                  {dirty ? "Có thay đổi chưa lưu" : "Đã lưu"}
+                </StatusPill>
                 <div className="ml-auto flex flex-wrap gap-1.5">
                   {dirty && (
                     <Button
@@ -111,15 +205,24 @@ export default function Editor({ email, landingUrl }: { email: string; landingUr
                       title="Bỏ thay đổi"
                       aria-label="Bỏ thay đổi"
                       size="icon"
-                      onClick={() => setDrafts((prev) => ({ ...prev, [slug]: saved[slug] }))}
+                      disabled={saving}
+                      onClick={() =>
+                        setDrafts((prev) => ({ ...prev, [slug]: saved[slug] }))
+                      }
                     >
                       <Undo2 />
                     </Button>
                   )}
-                  <Button variant="outline" disabled={!dirty} onClick={() => save(false)}>
-                    Lưu nháp
+                  <Button
+                    variant="outline"
+                    disabled={!dirty || saving}
+                    onClick={save}
+                  >
+                    {saving ? "Đang lưu…" : "Lưu nháp"}
                   </Button>
-                  <Button onClick={() => save(true)}>Xuất bản</Button>
+                  <Button disabled title="Xuất bản sẽ có ở Sprint 3">
+                    Xuất bản
+                  </Button>
                 </div>
               </footer>
             </>

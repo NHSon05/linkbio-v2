@@ -36,7 +36,7 @@ Update this file after each completed task: date, task ID, changed files, verifi
 
 ## Change log
 
-- 2026-11-25: Phase 5 started with PUB-01 and PUB-02, using on-demand publishing (decision 2026-11-25; ARCHITECTURE §2/§6/§9 updated). Adds migration `20261125110000_publishing.sql` (`publish_page`, `get_published_page`). The public route renders the live snapshot with `BioPage`, and the dashboard's "Xuất bản" is enabled. Verified: lint, typecheck, 26 tests, build, RLS suite (10 new assertions) on local Postgres. Not yet done: the migration push and an end-to-end publish against Supabase.
+- 2026-11-25: Phase 5 started with PUB-01 and PUB-02, using on-demand publishing (decision 2026-11-25; ARCHITECTURE §2/§6/§9 updated). Adds migration `20261125110000_publishing.sql` (`publish_page`, `get_published_page`). The public route renders the live snapshot with `BioPage`, and the dashboard's "Xuất bản" is enabled. Verified: lint, typecheck, 26 tests, build, RLS suite (10 new assertions) on local Postgres. The migration was pushed to Supabase on 2026-11-25. Checked live: anonymous visitors cannot publish or read tables, and an unknown public path shows the 404 page but with HTTP 200 (soft 404, open). Not yet done: a signed-in publish end to end.
 
 - 2026-11-25: Phase 4 (Renderer) finished. UI-02 adds the template desktop layouts through container queries and shows the desktop-only intro. Added render and snapshot tests in `src/lib/renderer/BioPage.test.tsx`, plus a `.tsx` include in the Vitest config. Verified: lint, typecheck, 26 tests, build, phone and desktop screenshots.
 

@@ -37,17 +37,17 @@ export async function signUpAndCreatePage(
   await page.goto("/login");
   await page.getByLabel("Email").fill(user.email);
   await page.getByLabel("Mật khẩu").fill(user.password);
-  await page.getByRole("button", { name: "Đăng nhập" }).click();
+  await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
 
   await expect(page).toHaveURL(/\/onboarding/);
   await page.getByLabel("Tên người dùng").fill(user.username);
-  await page.getByRole("button", { name: "Tiếp tục" }).click();
+  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
 
   await expect(
     page.getByRole("heading", { name: "Tạo trang đầu tiên" }),
   ).toBeVisible();
   await page.getByLabel("Slug").fill(slug);
-  await page.getByRole("button", { name: "Tạo trang" }).click();
+  await page.getByRole("button", { name: "Tạo trang", exact: true }).click();
   await expect(page).toHaveURL(/tab=bio/);
 }
 
@@ -55,12 +55,12 @@ export const profileName = (page: Page) =>
   page.getByLabel("Tên", { exact: true });
 
 export async function save(page: Page) {
-  await page.getByRole("button", { name: "Lưu nháp" }).click();
+  await page.getByRole("button", { name: "Lưu nháp", exact: true }).click();
   await expect(page.getByText("Đã lưu bản nháp.")).toBeVisible();
 }
 
 export async function publish(page: Page) {
-  await page.getByRole("button", { name: "Xuất bản" }).click();
+  await page.getByRole("button", { name: "Xuất bản", exact: true }).click();
   await expect(page.getByText(/^Đã xuất bản \//)).toBeVisible();
 }
 

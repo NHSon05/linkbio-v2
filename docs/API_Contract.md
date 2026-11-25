@@ -14,7 +14,7 @@ Base `/api/v1`. JSON responses. Auth via Supabase session cookie for dashboard; 
 | GET    | `/api/v1/pages/{pageId}`             | owner                | Read metadata + current draft                    |
 | PATCH  | `/api/v1/pages/{pageId}`             | owner                | Rename slug/title; check collision               |
 | PUT    | `/api/v1/pages/{pageId}/draft`       | owner                | Save validated config with revision precondition |
-| POST   | `/api/v1/pages/{pageId}/publish`     | owner                | Freeze version + request deploy                  |
+| POST   | `/api/v1/pages/{pageId}/publish`     | owner                | Make reviewed revision live (on-demand)          |
 | GET    | `/api/v1/pages/{pageId}/deployments` | owner                | Publish/deployment status                        |
 | GET    | `/api/v1/pages/{pageId}/analytics`   | owner                | Aggregated counts by time period                 |
 | POST   | `/api/v1/events`                     | public, rate-limited | Ingest view/click                                |
@@ -77,17 +77,7 @@ Next.js Server Actions may implement dashboard writes instead of REST, but must 
 { "expectedRevision": 2 }
 ```
 
-202:
-
-```json
-{
-  "data": {
-    "publicationId": "<uuid>",
-    "status": "queued",
-    "targetUrl": "https://linkbio.example/son/tech-review"
-  }
-}
-```
+Implemented as the `publishPage(pageId, expectedRevision)` server action over `publish_page()`. It returns `{ revision }` once the page is live; there is no deployment queue. Errors: 404 for a page that doesn't exist or isn't the caller's, and 409 `REVISION_CONFLICT` when the draft changed since it was reviewed.
 
 `queued` does **not** mean publicly live. Only deployment-ready verification marks live.
 
@@ -137,7 +127,7 @@ Template manifests decide which block types each region accepts. Values are cons
 
 ## Internal publishing protocol
 
-Publish stores desired immutable version transactionally. Deployment trigger carries a release/version identifier and an idempotency key. Callback requires HMAC or provider-verified signature; verify that callback deployment/version matches latest desired release before promoting `live_version_id`. Hourly reconciliation handles missed callbacks. Concurrent publishes must not regress live state.
+On-demand (2026-11-25). `publish_page` sets `desired_version_id` and `live_version_id` to the reviewed immutable version in one locked transaction, then the app calls `updateTag("published:{username}/{slug}")`. Public reads use `get_published_page(username, slug)` (anon), which returns the live `config`, or `redirect_to` for an old path. A live page takes precedence over a redirect. The `deployments` table is unused for now.
 
 ## Contract tests
 

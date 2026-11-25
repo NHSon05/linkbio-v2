@@ -2,12 +2,12 @@ import "server-only";
 import { createSessionClient } from "@/lib/auth";
 import { siteFromConfig, type Site } from "@/lib/schemas/site";
 
-/** A page with its current draft, as the dashboard edits it. */
+/** A page with its current draft, as the dashboard edits it, and the live version visitors see. */
 export type PageDraft = {
   id: string;
   revision: number;
-  published: boolean;
   site: Site;
+  live: { revision: number; site: Site } | null;
 };
 
 /** FE-02: the caller's pages with their latest drafts (RLS also limits rows to the owner). */
@@ -30,7 +30,11 @@ export async function listPageDrafts(
     .select("id, revision, config")
     .in(
       "id",
-      pages.map((page) => page.draft_version_id),
+      pages.flatMap((page) =>
+        page.live_version_id
+          ? [page.draft_version_id, page.live_version_id]
+          : [page.draft_version_id],
+      ),
     );
   if (versionError)
     throw new Error("Không đọc được bản nháp: " + versionError.message);
@@ -41,12 +45,18 @@ export async function listPageDrafts(
   return pages.flatMap((page) => {
     const version = byId.get(page.draft_version_id);
     if (!version) return [];
+    const live = page.live_version_id && byId.get(page.live_version_id);
     return [
       {
         id: page.id,
         revision: Number(version.revision),
-        published: page.live_version_id != null,
         site: siteFromConfig(version.config, username, page.slug),
+        live: live
+          ? {
+              revision: Number(live.revision),
+              site: siteFromConfig(live.config, username, page.slug),
+            }
+          : null,
       },
     ];
   });

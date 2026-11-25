@@ -108,6 +108,22 @@ select tests.ok((select new_path from public.url_redirects where old_path = '/so
 select (public.rename_page(:'page_a', 'tech-2')).id is not null as renamed \gset
 select tests.ok((select count(*) from public.url_redirects where old_path = '/son/tech-2') = 0, 'reused path stops redirecting');
 select tests.ok((select new_path from public.url_redirects where old_path = '/son/tech-3') = '/son/tech-2', 'previous path redirects to current');
+
+-- publish_page / get_published_page (PUB-01, PUB-02)
+select tests.throws(format($$select * from public.publish_page(%L, 1)$$, :'page_b'), 'PT404', 'A cannot publish B page');
+select tests.throws(format($$select * from public.publish_page(%L, 1)$$, :'page_a'), 'PT409', 'publish rejects a stale revision');
+select tests.ok((select revision from public.publish_page(:'page_a', 2)) = 2, 'publish current revision');
+select tests.ok((select revision from public.publish_page(:'page_a', 2)) = 2, 'publish is idempotent');
+select tests.ok((select revision from public.save_draft(:'page_a', 2, '{"schemaVersion":1,"template":"classic","profile":{"title":"Unpublished edit"}}')) = 3, 'save after publish');
+reset role;
+set local role anon;
+select tests.ok((select config->'profile'->>'title' from public.get_published_page('son', 'tech-2')) = 'A', 'anon reads the live version, not the newer draft');
+select tests.ok((select redirect_to from public.get_published_page('son', 'tech-3')) = '/son/tech-2', 'anon gets redirect for old path');
+select tests.ok((select count(*) from public.get_published_page('tien', 'tech-review')) = 0, 'unpublished page is not readable');
+select tests.ok((select count(*) from public.get_published_page('son', 'other')) = 0, 'never-published page is not readable');
+select tests.throws(format($$select * from public.publish_page(%L, 3)$$, :'page_a'), '42501', 'anon cannot publish');
+reset role;
+set local role authenticated;
 reset role;
 select tests.ok((select count(*) from public.pages where id = :'page_b') = 1, 'B page survived A delete');
 

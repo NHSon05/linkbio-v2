@@ -1,8 +1,10 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createSessionClient, getUsername, requireUser } from "@/lib/auth";
 import { MAX_IMAGE_BYTES, sniffImage } from "@/lib/media";
+import { publishedPageTag } from "@/lib/publishing/published";
 import { PageConfigSchema, type Site } from "@/lib/schemas/site";
 
 // Same rule as pages.slug in the database.
@@ -152,6 +154,11 @@ export async function renamePage(
 
   const user = await requireUser();
   const supabase = await createSessionClient();
+  const { data: before } = await supabase
+    .from("pages")
+    .select("slug")
+    .eq("id", pageId)
+    .maybeSingle();
   const { error, status } = await supabase.rpc("rename_page", {
     p_page_id: pageId,
     p_new_slug: slug,
@@ -164,6 +171,11 @@ export async function renamePage(
     return { error: "Không đổi được slug. Vui lòng thử lại." };
   }
   const username = await getUsername(user.id);
+  if (username) {
+    // The old address now redirects and the new one shows the page.
+    if (before) updateTag(publishedPageTag(username, before.slug));
+    updateTag(publishedPageTag(username, slug));
+  }
   redirect(
     "/?" + new URLSearchParams({ tab: "slug", slug: `${username}/${slug}` }),
   );
@@ -179,11 +191,47 @@ export async function deletePage(pageId: string): Promise<PageActionResult> {
     .delete()
     .eq("id", pageId)
     .eq("owner_id", user.id)
-    .select("id");
+    .select("slug");
   if (error) {
     console.error("Delete page failed", error);
     return { error: "Không xóa được trang. Vui lòng thử lại." };
   }
   if (!data.length) return { error: "Không tìm thấy trang." };
+  const username = await getUsername(user.id);
+  if (username) updateTag(publishedPageTag(username, data[0].slug));
   redirect("/");
+}
+
+export type PublishResult =
+  { revision: number } | { error: string; conflict?: boolean };
+
+/** PUB-01: make the reviewed draft revision live, then refresh the public page's cache. */
+export async function publishPage(
+  pageId: string,
+  expectedRevision: number,
+): Promise<PublishResult> {
+  if (!PAGE_ID.test(String(pageId)) || !Number.isInteger(expectedRevision))
+    return { error: "Không tìm thấy trang." };
+  const user = await requireUser();
+  const supabase = await createSessionClient();
+  const { data, error, status } = await supabase
+    .rpc("publish_page", {
+      p_page_id: pageId,
+      p_expected_revision: expectedRevision,
+    })
+    .single<{ revision: number; slug: string }>();
+  if (error) {
+    if (status === 409)
+      return {
+        conflict: true,
+        error:
+          "Trang đã được lưu ở nơi khác. Tải lại trang trước khi xuất bản.",
+      };
+    if (status === 404) return { error: "Không tìm thấy trang." };
+    console.error("Publish failed", error);
+    return { error: "Không xuất bản được. Vui lòng thử lại." };
+  }
+  const username = await getUsername(user.id);
+  if (username) updateTag(publishedPageTag(username, data.slug));
+  return { revision: Number(data.revision) };
 }

@@ -10,10 +10,9 @@ Multi-tenant link-in-bio SaaS. A user selects a system template, creates a page 
 - Supabase Auth, Postgres, Storage, Row Level Security (RLS).
 - Zod-validated JSON schema and shared component renderer for editor preview and public pages.
 - Vercel for dashboard runtime, static prerendering and CDN.
-- `generateStaticParams()` enumerates published routes during deployment; `dynamicParams = false` for public routes.
-- Publish creates a durable published snapshot and requests a deployment; **do not report success until deployment is ready**.
-- Scheduled GitHub Actions hourly reconciliation is a fallback, not a precise scheduler.
-- MVP rebuilds the public route set on each deployment; no separate build worker or Astro/CloudFront.
+- **On-demand publishing (decision 2026-11-25, replaces rebuild-per-publish).** `dynamicParams = false` is not available with `cacheComponents` in Next.js 16. Public pages are rendered on first visit from the live snapshot, through a `'use cache'` function tagged per page, and stored. Publish, rename and delete call `updateTag()` for the affected paths, so a publish is live in seconds without a Vercel rebuild.
+- Publish freezes the reviewed draft revision as `live_version_id` in one transaction; the previous live version stays until then.
+- No separate build worker or Astro/CloudFront.
 
 ## 3. System diagram
 
@@ -57,10 +56,9 @@ flowchart TD
 2. Create owned page and deep-copy default config into a draft version.
 3. Update draft using validated server-side writes; optimistic concurrency via revision/version.
 4. Preview draft with same renderer as public page.
-5. Publish freezes a snapshot, sets `desired_version_id`, and requests deployment.
-6. Build enumerates desired published snapshots and prerenders all routes.
-7. Deployment callback or reconciliation marks `live_version_id` only after the deployment is ready; failed deployment preserves the previous live release.
-8. A second publish during an active deployment must be serialized or supersede safely; never mark an older build as the newest release.
+5. Publish (`publish_page(page_id, expected_revision)`) checks that the draft revision is the one the owner reviewed, then points `desired_version_id` and `live_version_id` at that immutable version. It is idempotent, and the page row lock serializes concurrent publishes.
+6. The server action refreshes the page's cache tag (`updateTag`). The next visitor gets the new snapshot, rendered by the same `BioPage` as the preview.
+7. Visitors read only through `get_published_page(username, slug)`, which returns the live config or a redirect for a renamed page and never a draft.
 
 ## 7. Rendering and styling
 
@@ -81,7 +79,7 @@ flowchart TD
 
 ## 9. Deployment strategy and tradeoffs
 
-`next build` with `generateStaticParams` rebuilds the route set; newly published slugs do not exist until deployment. This is acceptable for MVP but costs grow with page count and frequency. Vercel's production deploy atomically replaces the previous release; record deployment status separately from draft state. Later evaluate ISR/on-demand revalidation or independent artifact uploads if rebuilds become expensive.
+Code deploys rebuild the app; publishing does not. Public pages are cached per path (`cacheLife('max')`) and refreshed by tag on publish, rename and delete. A database outage throws instead of caching a 404. Risk: a deploy starts with an empty cache, so the first visit to each page after a deploy reads Supabase. Unknown paths also cache their 404 per path; add rate limiting at the edge if this is abused.
 
 ## 10. Explicit non-goals (MVP)
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpRight, Undo2 } from "lucide-react";
 import { toast } from "sonner";
-import { saveDraft } from "@/app/(dashboard)/actions";
+import { publishPage, saveDraft } from "@/app/(dashboard)/actions";
 import type { PageDraft } from "@/lib/pages";
 import { summaryOf, type Site } from "@/lib/schemas/site";
 import { Panel, StatusPill } from "@/components/dashboard/panel";
@@ -60,16 +60,20 @@ export default function Editor({
   const [revisions, setRevisions] = useState<Record<string, number>>(() =>
     bySlug(pages, (p) => p.revision),
   );
+  const [live, setLive] = useState<Record<string, PageDraft["live"]>>(() =>
+    bySlug(pages, (p) => p.live),
+  );
   const [saving, setSaving] = useState(false);
   const meta = bySlug(pages, (p) => p);
   const sites = pages.map((page) =>
-    summaryOf(drafts[page.site.slug], page.published),
+    summaryOf(drafts[page.site.slug], !!live[page.site.slug]),
   );
   const slug = drafts[params.get("slug") ?? ""]
     ? params.get("slug")!
     : pages[0]?.site.slug;
   const draft = slug ? drafts[slug] : undefined;
   const dirty = !!slug && JSON.stringify(saved[slug]) !== JSON.stringify(draft);
+  const upToDate = !!slug && !dirty && live[slug]?.revision === revisions[slug];
   // Rename/delete remount the editor, which would drop unsaved edits on any page.
   const anyDirty = pages.some(
     ({ site }) =>
@@ -84,24 +88,45 @@ export default function Editor({
       return { ...prev, [slug]: next };
     });
   };
-  async function save() {
+  /** Saves the current draft; returns its revision, or undefined after showing the error. */
+  async function persist(slug: string, draft: Site) {
+    const result = await saveDraft(meta[slug].id, revisions[slug], draft);
+    if ("error" in result) {
+      toast.error(result.error);
+      return undefined;
+    }
+    setRevisions((prev) => ({ ...prev, [slug]: result.revision }));
+    setSaved((prev) => ({ ...prev, [slug]: draft }));
+    return result.revision;
+  }
+  async function run(task: (slug: string, draft: Site) => Promise<void>) {
     if (!slug || !draft || saving) return;
     setSaving(true);
     try {
-      const result = await saveDraft(meta[slug].id, revisions[slug], draft);
-      if ("error" in result) {
-        toast.error(result.error);
-        return;
-      }
-      setRevisions((prev) => ({ ...prev, [slug]: result.revision }));
-      setSaved((prev) => ({ ...prev, [slug]: draft }));
-      toast.success("Đã lưu bản nháp.");
+      await task(slug, draft);
     } catch {
       toast.error("Không kết nối được máy chủ. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }
   }
+  const save = () =>
+    run(async (slug, draft) => {
+      if (await persist(slug, draft)) toast.success("Đã lưu bản nháp.");
+    });
+  // PUB-01: unsaved edits are saved first, so visitors see exactly what the preview shows.
+  const publish = () =>
+    run(async (slug, draft) => {
+      const revision = dirty ? await persist(slug, draft) : revisions[slug];
+      if (!revision) return;
+      const result = await publishPage(meta[slug].id, revision);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      setLive((prev) => ({ ...prev, [slug]: { revision, site: draft } }));
+      toast.success("Đã xuất bản /" + slug);
+    });
 
   return (
     <WorkspaceShell
@@ -143,7 +168,7 @@ export default function Editor({
                 {draft.profile.title} · /{slug}
               </p>
             </div>
-            {view === "website" && meta[slug].published && (
+            {view === "website" && live[slug] && (
               <Button asChild>
                 <Link href={"/" + slug} target="_blank" rel="noreferrer">
                   Mở trang công khai
@@ -153,17 +178,17 @@ export default function Editor({
             )}
           </div>
           {view === "website" ? (
-            meta[slug].published ? (
+            live[slug] ? (
               <SitePreview
                 key={"published-" + slug}
-                site={saved[slug]}
+                site={live[slug].site}
                 landingUrl={landingUrl}
                 published
               />
             ) : (
               <Panel
                 title="Trang chưa được xuất bản"
-                hint="Xuất bản sẽ có ở Sprint 3. Xem bản nháp ở tab Link in bio."
+                hint={`Bấm "Xuất bản" để trang xuất hiện tại /${slug}.`}
               />
             )
           ) : (
@@ -199,7 +224,7 @@ export default function Editor({
                           key={slug}
                           pageId={meta[slug!].id}
                           path={slug!}
-                          published={meta[slug!].published}
+                          published={!!live[slug!]}
                           dirty={anyDirty}
                         />
                         <Design draft={draft} update={update} locked={saving} />
@@ -212,8 +237,14 @@ export default function Editor({
                 </div>
               </div>
               <footer className="sticky bottom-0 z-[5] flex flex-wrap items-center gap-2 rounded-lg border bg-card/95 px-3 py-2 shadow-soft backdrop-blur-sm">
-                <StatusPill dirty={dirty}>
-                  {dirty ? "Có thay đổi chưa lưu" : "Đã lưu"}
+                <StatusPill dirty={!upToDate}>
+                  {dirty
+                    ? "Có thay đổi chưa lưu"
+                    : upToDate
+                      ? "Đã xuất bản"
+                      : live[slug]
+                        ? "Đã lưu · có thay đổi chưa xuất bản"
+                        : "Đã lưu · chưa xuất bản"}
                 </StatusPill>
                 <div className="ml-auto flex flex-wrap gap-1.5">
                   {dirty && (
@@ -237,8 +268,8 @@ export default function Editor({
                   >
                     {saving ? "Đang lưu…" : "Lưu nháp"}
                   </Button>
-                  <Button disabled title="Xuất bản sẽ có ở Sprint 3">
-                    Xuất bản
+                  <Button disabled={upToDate || saving} onClick={publish}>
+                    {saving ? "Đang xử lý…" : "Xuất bản"}
                   </Button>
                 </div>
               </footer>

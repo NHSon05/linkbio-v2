@@ -34,6 +34,10 @@ export const ThemeSchema = z.object({
   font: z.string().optional(),
   radius: z.union([z.number(), z.string()]).optional(),
   button: z.enum(["pill", "rounded"]).optional(),
+  // V2-06: fixed steps only, so a page can never carry arbitrary CSS values.
+  fontSize: z.enum(["sm", "md", "lg"]).optional(),
+  spacing: z.enum(["compact", "normal", "relaxed"]).optional(),
+  width: z.enum(["narrow", "normal", "wide"]).optional(),
 });
 export type Theme = z.infer<typeof ThemeSchema>;
 

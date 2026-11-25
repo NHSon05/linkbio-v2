@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowUp, Eye, EyeOff, Pin } from "lucide-react";
 import { REGIONS, layoutOf, type Block, type RegionName, type Site } from "@/lib/schemas/site";
 import { templates } from "@/templates";
 import { TemplatePicker } from "@/components/dashboard/workspace/template-picker";
@@ -6,11 +7,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Panel } from "@/components/dashboard/panel";
+import { Segmented } from "@/components/dashboard/segmented";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { UpdateDraft } from "./products";
 
 const NONE = "__none";
+// V2-06: the middle option is the template default, stored as "no value".
+const SCALES = [
+  {
+    key: "fontSize",
+    label: "Cỡ chữ",
+    options: [
+      { value: "sm", label: "Nhỏ" },
+      { value: "md", label: "Vừa" },
+      { value: "lg", label: "Lớn" },
+    ],
+  },
+  {
+    key: "spacing",
+    label: "Khoảng cách",
+    options: [
+      { value: "compact", label: "Gọn" },
+      { value: "normal", label: "Vừa" },
+      { value: "relaxed", label: "Thoáng" },
+    ],
+  },
+  {
+    key: "width",
+    label: "Độ rộng nội dung",
+    options: [
+      { value: "narrow", label: "Hẹp" },
+      { value: "normal", label: "Vừa" },
+      { value: "wide", label: "Rộng" },
+    ],
+  },
+] as const;
 const FONTS = ["Sora", "Manrope", "Inter", "DM Sans", "Be Vietnam Pro"];
 
 export function Design({ draft, update, locked }: { draft: Site; update: UpdateDraft; locked: boolean }) {
@@ -69,7 +101,7 @@ export function Design({ draft, update, locked }: { draft: Site; update: UpdateD
             onClick={() => move(region, i, -1)}
             aria-label="Lên"
           >
-            ↑
+            <ArrowUp />
           </Button>
           <Button
             variant="ghost"
@@ -78,7 +110,7 @@ export function Design({ draft, update, locked }: { draft: Site; update: UpdateD
             onClick={() => move(region, i, 1)}
             aria-label="Xuống"
           >
-            ↓
+            <ArrowDown />
           </Button>
         </>
       )}
@@ -88,17 +120,19 @@ export function Design({ draft, update, locked }: { draft: Site; update: UpdateD
         onClick={() => toggle(b.id, "pinned")}
         aria-pressed={!!b.pinned}
         title="Ghim lên đầu vùng"
+        aria-label="Ghim lên đầu vùng"
       >
-        📌
+        <Pin />
       </Button>
       <Button
         variant="ghost"
         size="icon-sm"
         onClick={() => toggle(b.id, "hidden")}
         aria-pressed={!!b.hidden}
-        title="Ẩn/hiện"
+        title={b.hidden ? "Hiện khối" : "Ẩn khối"}
+        aria-label={b.hidden ? "Hiện khối" : "Ẩn khối"}
       >
-        {b.hidden ? "🙈" : "👁"}
+        {b.hidden ? <EyeOff /> : <Eye />}
       </Button>
       <Select
         value={region ?? NONE}
@@ -209,6 +243,23 @@ export function Design({ draft, update, locked }: { draft: Site; update: UpdateD
               }
             />
           </div>
+          {SCALES.map(({ key, label, options }) => (
+            <div key={key} className="col-span-2 grid gap-1.5">
+              <Label id={`theme-${key}`}>{label}</Label>
+              <Segmented
+                aria-labelledby={`theme-${key}`}
+                className="w-fit"
+                options={[...options]}
+                value={draft.theme[key] ?? options[1].value}
+                onValueChange={(value) =>
+                  update((d) => {
+                    if (value === options[1].value) delete d.theme[key];
+                    else (d.theme as Record<string, string>)[key] = value;
+                  })
+                }
+              />
+            </div>
+          ))}
         </div>
       </Panel>
 

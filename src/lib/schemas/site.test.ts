@@ -1,5 +1,5 @@
 import { EDITABLE_TYPES } from "@/lib/renderer/blocks";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { templates } from "@/templates";
 import {
@@ -55,13 +55,19 @@ describe("page config schema v1", () => {
   });
 
   it("starts every template with valid sample content", () => {
-    const sql = readFileSync(
-      "supabase/migrations/20261125090000_template_starters.sql",
-      "utf8",
-    );
-    const configs = [...sql.matchAll(/'(\{"schemaVersion".*?\})'::jsonb/g)].map(
-      (m) => JSON.parse(m[1].replaceAll("''", "'")),
-    );
+    // Starters may be set in any migration; the latest one per template wins (docs/template-authoring.md).
+    const sql = readdirSync("supabase/migrations")
+      .sort()
+      .map((f) => readFileSync(`supabase/migrations/${f}`, "utf8"))
+      .join("\n");
+    const latest = new Map<string, ReturnType<typeof JSON.parse>>();
+    for (const m of sql.matchAll(
+      /update public\.templates set default_config = '(\{"schemaVersion".*?\})'::jsonb/g,
+    )) {
+      const config = JSON.parse(m[1].replaceAll("''", "'"));
+      latest.set(config.template, config);
+    }
+    const configs = [...latest.values()];
     expect(configs.map((c) => c.template).sort()).toEqual(
       Object.keys(templates).sort(),
     );
@@ -82,6 +88,45 @@ describe("page config schema v1", () => {
           expect(EDITABLE_TYPES).toContain(type);
           expect(tpl.regions[region as RegionName].allow).toContain(type);
         }
+    }
+  });
+});
+
+describe("theme and template switching (V2-06)", () => {
+  it("rejects values outside the fixed theme steps", () => {
+    for (const theme of [
+      { fontSize: "xl" },
+      { spacing: "10px" },
+      { width: "100vw" },
+    ])
+      expect(
+        SiteSchema.safeParse({ ...stored, slug: "a/b", theme }).success,
+      ).toBe(false);
+  });
+
+  it("keeps content, layout and theme when the template changes", () => {
+    const site = siteFromConfig(
+      {
+        ...stored,
+        theme: { fontSize: "lg", accent: "#ff0000" },
+        blocks: [
+          { id: "l", type: "link", text: "Shopee", url: "https://shopee.vn" },
+        ],
+        layout: { main: { blocks: ["l"] } },
+      },
+      "son",
+      "tech-review",
+    );
+    for (const template of Object.keys(templates)) {
+      const switched = siteFromConfig(
+        PageConfigSchema.parse({ ...site, template }),
+        "son",
+        "tech-review",
+      );
+      expect(switched.template).toBe(template);
+      expect(switched.blocks).toEqual(site.blocks);
+      expect(switched.layout).toEqual(site.layout);
+      expect(switched.theme).toEqual(site.theme);
     }
   });
 });

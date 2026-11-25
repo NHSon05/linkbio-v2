@@ -30,6 +30,7 @@ test("two users publish the same slug independently", async ({ browser }) => {
 
   // Not published yet: visitors get the not-found page.
   let anon = await visit(browser, sonPath);
+  expect(anon.response?.status()).toBe(404);
   await expect(
     anon.visitor.getByText("This page could not be found."),
   ).toBeVisible();
@@ -39,6 +40,7 @@ test("two users publish the same slug independently", async ({ browser }) => {
   await publish(sonPage);
   await expect(sonPage.getByText("Đã xuất bản", { exact: true })).toBeVisible();
   anon = await visit(browser, sonPath);
+  expect(anon.response?.status()).toBe(200);
   await expect(
     anon.visitor.getByRole("heading", { level: 1, name: "Son Review" }),
   ).toBeVisible();
@@ -100,8 +102,12 @@ test("two users publish the same slug independently", async ({ browser }) => {
   await tienCtx.close();
 });
 
-test("unknown public paths show the not-found page", async ({ browser }) => {
-  const { visitor, close } = await visit(browser, "/nobody-e2e/missing");
+test("unknown public paths answer 404", async ({ browser }) => {
+  const { visitor, response, close } = await visit(
+    browser,
+    "/nobody-e2e/missing",
+  );
+  expect(response?.status()).toBe(404);
   await expect(
     visitor.getByText("This page could not be found."),
   ).toBeVisible();

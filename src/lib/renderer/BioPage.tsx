@@ -8,6 +8,7 @@ import {
   type Block,
   type RegionName,
   type Site,
+  type Theme,
 } from "@/lib/schemas/site";
 import { templates } from "@/templates";
 import { catalogFor } from "@/templates/catalog";
@@ -36,6 +37,27 @@ const NETWORKS: Record<string, string> = {
  * UI-01: renders a page config. Same component for the editor preview and (Sprint 3) the public page.
  * Pure: no hooks, no data fetching, so it renders on the server or client.
  */
+// V2-06: the theme overrides the design-token variables that Tailwind classes read (src/styles/tokens.css),
+// so text, spacing and width scale everywhere inside the page without touching each block.
+export const FONT_SIZES = { xs: 0.75, sm: 0.8125, base: 0.875, lg: 1, xl: 1.125, "2xl": 1.375, "3xl": 1.75 }; // rem, mirrors tokens.css
+const FONT_SCALE = { sm: 0.9, lg: 1.12 } as const;
+const SPACING = { compact: "0.2rem", relaxed: "0.3rem" } as const; // default --spacing is 0.25rem
+const WIDTH = {
+  narrow: { "--container-md": "24rem", "--container-3xl": "40rem" },
+  wide: { "--container-md": "32rem", "--container-3xl": "56rem" },
+} as const;
+
+/** CSS variables for the optional font size, spacing and width steps; empty for the defaults. */
+export function themeScaleVars(theme: Theme): Record<string, string> {
+  const vars: Record<string, string> = {};
+  if (theme.fontSize === "sm" || theme.fontSize === "lg")
+    for (const [step, rem] of Object.entries(FONT_SIZES))
+      vars[`--font-size-${step}`] = `${+(rem * FONT_SCALE[theme.fontSize]).toFixed(4)}rem`;
+  if (theme.spacing === "compact" || theme.spacing === "relaxed") vars["--spacing"] = SPACING[theme.spacing];
+  if (theme.width === "narrow" || theme.width === "wide") Object.assign(vars, WIDTH[theme.width]);
+  return vars;
+}
+
 export function BioPage({ site }: { site: Site }) {
   const tpl = templates[site.template] ?? templates.classic;
   const theme = themeOf(site, tpl);
@@ -52,6 +74,7 @@ export function BioPage({ site }: { site: Site }) {
     color: dark ? "#F7F7F7" : "#282828",
     // shortcut: only Sora is loaded (layout.tsx); other fonts fall back to the system font until a font loader exists.
     fontFamily: `"${theme.font ?? "Sora"}", var(--font-sora), system-ui, sans-serif`,
+    ...themeScaleVars(theme),
   } as CSSProperties;
 
   const region = (name: RegionName) => {
@@ -63,7 +86,7 @@ export function BioPage({ site }: { site: Site }) {
         data-region={name}
         className={cn(
           variant === "carousel"
-            ? "-mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] *:w-[78%] *:shrink-0 *:snap-start @5xl:*:w-[calc(50%-0.375rem)]"
+            ? "-mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 scrollbar-none *:w-[78%] *:shrink-0 *:snap-start @5xl:*:w-[calc(50%-0.375rem)]"
             : cn("grid gap-3", variant === "grid-2" && "grid-cols-2"),
           // Wide screens: the main list/grid uses the template's desktop column count.
           name === "main" &&
@@ -124,7 +147,7 @@ function ProfileHeader({ site }: { site: Site }) {
         <img
           alt=""
           src={cover}
-          className="mb-2 h-32 w-full rounded-[var(--bio-radius)] object-cover"
+          className="mb-2 h-32 w-full rounded-(--bio-radius) object-cover"
         />
       )}
       {avatar ? (
@@ -136,7 +159,7 @@ function ProfileHeader({ site }: { site: Site }) {
       ) : (
         <span
           aria-hidden
-          className="grid size-20 place-items-center rounded-full bg-[var(--bio-accent)] text-2xl font-semibold text-[#282828]"
+          className="grid size-20 place-items-center rounded-full bg-(--bio-accent) text-2xl font-semibold text-[#282828]"
         >
           {profile.title.trim().charAt(0).toUpperCase()}
         </span>
@@ -145,11 +168,11 @@ function ProfileHeader({ site }: { site: Site }) {
         {profile.title}
       </h1>
       {profile.subtitle && (
-        <p className="text-sm text-[var(--bio-muted)]">{profile.subtitle}</p>
+        <p className="text-sm text-(--bio-muted)">{profile.subtitle}</p>
       )}
       {profile.about && (
         // The editor labels this field "chỉ hiện trên desktop".
-        <p className="hidden max-w-xl text-sm whitespace-pre-line text-[var(--bio-muted)] @5xl:block">
+        <p className="hidden max-w-xl text-sm whitespace-pre-line text-(--bio-muted) @5xl:block">
           {profile.about}
         </p>
       )}
@@ -164,7 +187,7 @@ function ProfileHeader({ site }: { site: Site }) {
                   data-block-id={"social-" + social.type}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
-                  className="block rounded-full bg-[var(--bio-surface)] px-3 py-1 text-xs font-medium"
+                  className="block rounded-full bg-(--bio-surface) px-3 py-1 text-xs font-medium"
                 >
                   {NETWORKS[social.type] ?? social.type}
                 </a>
@@ -213,7 +236,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
         <MaybeLink
           url={block.url}
           trackId={block.id}
-          className="block rounded-[var(--bio-button-radius)] bg-[var(--bio-accent)] px-5 py-3.5 text-center text-sm font-semibold text-[#282828]"
+          className="block rounded-(--bio-button-radius) bg-(--bio-accent) px-5 py-3.5 text-center text-sm font-semibold text-[#282828]"
         >
           {block.text || block.title || "Liên kết"}
         </MaybeLink>
@@ -224,7 +247,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
         <MaybeLink
           url={block.url}
           trackId={block.id}
-          className="block overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-surface)]"
+          className="block overflow-hidden rounded-(--bio-radius) bg-(--bio-surface)"
         >
           {image && (
             <img
@@ -238,7 +261,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
               {block.text || block.title}
             </strong>
             {block.subtext && (
-              <span className="mt-1 block text-xs text-[var(--bio-muted)]">
+              <span className="mt-1 block text-xs text-(--bio-muted)">
                 {block.subtext}
               </span>
             )}
@@ -252,7 +275,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
         <MaybeLink
           url={block.url}
           trackId={block.id}
-          className="relative block overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-accent)] px-5 py-6 text-[#282828]"
+          className="relative block overflow-hidden rounded-(--bio-radius) bg-(--bio-accent) px-5 py-6 text-[#282828]"
         >
           {image && (
             <img
@@ -273,7 +296,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
     case "video": {
       const embed = videoEmbed(block.url);
       return (
-        <figure className="overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-surface)]">
+        <figure className="overflow-hidden rounded-(--bio-radius) bg-(--bio-surface)">
           {embed ? (
             <iframe
               src={embed}
@@ -284,7 +307,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
               className="aspect-video w-full border-0"
             />
           ) : (
-            <div className="grid aspect-video place-items-center p-4 text-center text-xs text-[var(--bio-muted)]">
+            <div className="grid aspect-video place-items-center p-4 text-center text-xs text-(--bio-muted)">
               Dán link YouTube hoặc TikTok để hiện video
             </div>
           )}
@@ -314,7 +337,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
                     <MaybeLink
                       url={product.affiliateUrl || product.url}
                       trackId={product.id}
-                      className="block h-full overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-surface)]"
+                      className="block h-full overflow-hidden rounded-(--bio-radius) bg-(--bio-surface)"
                     >
                       {image && (
                         <img
@@ -334,7 +357,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
               })}
             </ul>
           ) : (
-            <p className="rounded-[var(--bio-radius)] bg-[var(--bio-surface)] p-4 text-center text-xs text-[var(--bio-muted)]">
+            <p className="rounded-(--bio-radius) bg-(--bio-surface) p-4 text-center text-xs text-(--bio-muted)">
               Chưa có sản phẩm
             </p>
           )}

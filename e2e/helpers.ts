@@ -71,3 +71,25 @@ export async function visit(browser: Browser, path: string) {
   const response = await visitor.goto(path);
   return { visitor, response, close: () => context.close() };
 }
+
+/**
+ * Visits like a regular browser so the tracker counts the view (it ignores automated browsers via
+ * navigator.webdriver), and waits until the events endpoint accepted it.
+ */
+export async function visitAndTrack(browser: Browser, path: string) {
+  const context = await browser.newContext();
+  await context.addInitScript(() =>
+    Object.defineProperty(Navigator.prototype, "webdriver", {
+      get: () => false,
+    }),
+  );
+  const visitor = await context.newPage();
+  const accepted = visitor.waitForResponse(
+    (r) =>
+      r.url().endsWith("/api/v1/events") && r.request().method() === "POST",
+  );
+  await visitor.goto(path);
+  const response = await accepted;
+  await context.close();
+  return response.status();
+}

@@ -6,6 +6,7 @@ import {
   save,
   signUpAndCreatePage,
   visit,
+  visitAndTrack,
 } from "./helpers";
 
 // QA-01: login → create → edit → publish; two users with the same slug get separate pages.
@@ -76,7 +77,8 @@ test("two users publish the same slug independently", async ({ browser }) => {
   ).toBeVisible();
   await anon.close();
 
-  // AN-01/AN-02: the anonymous visits above show up as views on Son's Home tab.
+  // AN-01/AN-02: a regular visit is recorded and shows up as a view on Son's Home tab.
+  expect(await visitAndTrack(browser, sonPath)).toBe(202);
   await expect
     .poll(
       async () => {

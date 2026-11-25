@@ -8,8 +8,8 @@ import { catalogFor } from "@/templates/catalog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/dashboard/segmented";
-import { mockTraffic } from "@/components/dashboard/mock/data";
 import type { SiteSummary } from "@/lib/schemas/site";
+import type { TrafficDay } from "@/lib/analytics";
 import { CreatePage } from "./create-page";
 import { Panel } from "@/components/dashboard/panel";
 import { workspaceUrl } from "./navigation";
@@ -57,14 +57,15 @@ export function HomeOverview({
   sites,
   drafts,
   landingUrl,
+  traffic: rows,
 }: {
   site: Site;
   sites: SiteSummary[];
   drafts: Record<string, Site>;
   landingUrl: string;
+  /** AN-02: last 30 days from page_events; null when loading failed. */
+  traffic: TrafficDay[] | null;
 }) {
-  const rows = mockTraffic(site.slug);
-  const error = "";
   const [period, setPeriod] = useState("7");
   const days = rows?.slice(-Number(period)) ?? [];
   const views = days.reduce((n, d) => n + d.views, 0);
@@ -103,13 +104,9 @@ export function HomeOverview({
               </span>
             </div>
           </div>
-          {error ? (
+          {!rows ? (
             <p role="alert" className="py-8">
-              Chưa tải được thống kê. {error}
-            </p>
-          ) : !rows ? (
-            <p role="status" className="py-8">
-              Đang tải thống kê…
+              Chưa tải được thống kê. Tải lại trang để thử lại.
             </p>
           ) : (
             <div>

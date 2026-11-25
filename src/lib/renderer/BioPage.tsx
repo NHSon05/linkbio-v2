@@ -161,6 +161,7 @@ function ProfileHeader({ site }: { site: Site }) {
               <li key={i}>
                 <a
                   href={href}
+                  data-block-id={"social-" + social.type}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   className="block rounded-full bg-[var(--bio-surface)] px-3 py-1 text-xs font-medium"
@@ -179,10 +180,13 @@ function ProfileHeader({ site }: { site: Site }) {
 /** Wraps content in a safe external link when the block has a valid URL. */
 function MaybeLink({
   url,
+  trackId,
   className,
   children,
 }: {
   url: unknown;
+  /** Reported as block_id when a visitor clicks (AN-01). */
+  trackId: string;
   className: string;
   children: ReactNode;
 }) {
@@ -190,6 +194,7 @@ function MaybeLink({
   return href ? (
     <a
       href={href}
+      data-block-id={trackId}
       target="_blank"
       rel="noopener noreferrer nofollow"
       className={className}
@@ -207,6 +212,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
       return (
         <MaybeLink
           url={block.url}
+          trackId={block.id}
           className="block rounded-[var(--bio-button-radius)] bg-[var(--bio-accent)] px-5 py-3.5 text-center text-sm font-semibold text-[#282828]"
         >
           {block.text || block.title || "Liên kết"}
@@ -217,6 +223,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
       return (
         <MaybeLink
           url={block.url}
+          trackId={block.id}
           className="block overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-surface)]"
         >
           {image && (
@@ -244,6 +251,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
       return (
         <MaybeLink
           url={block.url}
+          trackId={block.id}
           className="relative block overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-accent)] px-5 py-6 text-[#282828]"
         >
           {image && (
@@ -305,6 +313,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
                   <li key={product.id}>
                     <MaybeLink
                       url={product.affiliateUrl || product.url}
+                      trackId={product.id}
                       className="block h-full overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-surface)]"
                     >
                       {image && (

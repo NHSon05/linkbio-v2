@@ -12,6 +12,8 @@ export async function proxy(request: NextRequest) {
   // Các callback tự xử lý xác thực và phiên đăng nhập.
   if (pathname === EMAIL_CONFIRM_PATH) return NextResponse.next({ headers: AUTH_LINK_HEADERS });
   if (authCallbacks.has(pathname)) return NextResponse.next();
+  // Anonymous tracking beacons never use the session; skip the auth check for them.
+  if (pathname === "/api/v1/events") return NextResponse.next();
 
   const env = getSupabaseEnv();
   if (!env) return NextResponse.next();

@@ -1,5 +1,6 @@
 import "server-only";
 import { createSessionClient } from "@/lib/auth";
+import { fillDays, type TrafficDay } from "@/lib/analytics";
 import { siteFromConfig, type Site } from "@/lib/schemas/site";
 
 /** A page with its current draft, as the dashboard edits it, and the live version visitors see. */
@@ -60,4 +61,38 @@ export async function listPageDrafts(
       },
     ];
   });
+}
+
+export const TRAFFIC_DAYS = 30;
+
+/** AN-02: last 30 days of views/clicks per page id; null if they could not be loaded. */
+export async function listPageTraffic(): Promise<Record<
+  string,
+  TrafficDay[]
+> | null> {
+  const supabase = await createSessionClient();
+  const { data, error } = await supabase.rpc("page_traffic", {
+    p_days: TRAFFIC_DAYS,
+  });
+  if (error) {
+    console.error("Traffic query failed", error.message);
+    return null;
+  }
+  const rows = new Map<
+    string,
+    { day: string; views: number; clicks: number }[]
+  >();
+  for (const r of data as {
+    page_id: string;
+    day: string;
+    views: number;
+    clicks: number;
+  }[]) {
+    const list = rows.get(r.page_id) ?? [];
+    list.push({ day: r.day, views: Number(r.views), clicks: Number(r.clicks) });
+    rows.set(r.page_id, list);
+  }
+  return Object.fromEntries(
+    [...rows].map(([id, list]) => [id, fillDays(list, TRAFFIC_DAYS)]),
+  );
 }

@@ -7,6 +7,7 @@ import { ArrowUpRight, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { publishPage, saveDraft } from "@/app/(dashboard)/actions";
 import type { PageDraft } from "@/lib/pages";
+import { fillDays, type TrafficDay } from "@/lib/analytics";
 import { summaryOf, type Site } from "@/lib/schemas/site";
 import { Panel, StatusPill } from "@/components/dashboard/panel";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,9 @@ import { PageSettings } from "@/components/dashboard/workspace/page-settings";
 import { Profile } from "@/components/dashboard/workspace/profile";
 import { SocialLinks } from "@/components/dashboard/workspace/social-links";
 
+// Same window as listPageTraffic() (TRAFFIC_DAYS, server-only module).
+const TRAFFIC_WINDOW = 30;
+
 const headings = {
   home: "Tổng quan",
   bio: "Link in bio",
@@ -44,10 +48,13 @@ export default function Editor({
   email,
   landingUrl,
   pages,
+  traffic,
 }: {
   email: string;
   landingUrl: string;
   pages: PageDraft[];
+  /** Per page id; null when analytics could not be loaded. */
+  traffic: Record<string, TrafficDay[]> | null;
 }) {
   const params = useSearchParams();
   const view = sections.find((s) => s.id === params.get("tab"))?.id ?? "home";
@@ -158,6 +165,11 @@ export default function Editor({
           sites={sites}
           drafts={drafts}
           landingUrl={landingUrl}
+          traffic={
+            traffic
+              ? (traffic[meta[slug].id] ?? fillDays([], TRAFFIC_WINDOW))
+              : null
+          }
         />
       ) : (
         <div key={slug} className="grid gap-5">

@@ -7,7 +7,7 @@ import {
   getUsername,
   requireUser,
 } from "@/lib/auth";
-import { listPageDrafts } from "@/lib/pages";
+import { listPageDrafts, listPageTraffic } from "@/lib/pages";
 
 export default function Page() {
   return (
@@ -27,7 +27,10 @@ async function Dashboard() {
   // ON-01: a username is needed before any page (/{username}/{slug}) can exist.
   const username = await getUsername(user.id);
   if (!username) redirect("/onboarding");
-  const pages = await listPageDrafts(user.id, username);
+  const [pages, traffic] = await Promise.all([
+    listPageDrafts(user.id, username),
+    listPageTraffic(),
+  ]);
   return (
     // Remount when pages are created, renamed or deleted so local drafts reset.
     <Editor
@@ -35,6 +38,7 @@ async function Dashboard() {
       email={user.email ?? ""}
       landingUrl={dashboardOrigin()}
       pages={pages}
+      traffic={traffic}
     />
   );
 }

@@ -11,7 +11,15 @@ import {
 } from "@/lib/schemas/site";
 import { templates } from "@/templates";
 import { catalogFor } from "@/templates/catalog";
+import { cn } from "@/lib/utils";
 import { safeUrl, videoEmbed } from "./blocks";
+
+// Literal class names so Tailwind generates them.
+const DESKTOP_COLUMNS: Record<number, string> = {
+  1: "@5xl:grid-cols-1",
+  2: "@5xl:grid-cols-2",
+  3: "@5xl:grid-cols-3",
+};
 
 const NETWORKS: Record<string, string> = {
   instagram: "Instagram",
@@ -53,13 +61,15 @@ export function BioPage({ site }: { site: Site }) {
     return (
       <div
         data-region={name}
-        className={
-          variant === "grid-2"
-            ? "grid grid-cols-2 gap-3"
-            : variant === "carousel"
-              ? "-mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] *:w-[78%] *:shrink-0 *:snap-start"
-              : "grid gap-3"
-        }
+        className={cn(
+          variant === "carousel"
+            ? "-mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] *:w-[78%] *:shrink-0 *:snap-start @5xl:*:w-[calc(50%-0.375rem)]"
+            : cn("grid gap-3", variant === "grid-2" && "grid-cols-2"),
+          // Wide screens: the main list/grid uses the template's desktop column count.
+          name === "main" &&
+            variant !== "carousel" &&
+            DESKTOP_COLUMNS[tpl.desktopColumns],
+        )}
       >
         {blocks.map((block) => (
           <BlockView key={block.id} block={block} site={site} />
@@ -68,14 +78,38 @@ export function BioPage({ site }: { site: Site }) {
     );
   };
 
+  // Container queries: the same markup adapts to the phone preview, the desktop preview and the real page.
   return (
-    <div data-template={tpl.id} style={style} className="min-h-full w-full">
-      <div className="mx-auto grid max-w-md gap-5 px-5 pt-8 pb-12">
-        <ProfileHeader site={site} />
-        {region("hero")}
-        {region("main")}
-        {region("footer")}
-      </div>
+    <div
+      data-template={tpl.id}
+      data-desktop={tpl.desktop}
+      style={style}
+      className="@container min-h-full w-full"
+    >
+      {tpl.desktop === "split" ? (
+        <div className="mx-auto grid max-w-md gap-5 px-5 pt-8 pb-12 @5xl:max-w-6xl @5xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @5xl:items-start @5xl:gap-10 @5xl:px-10">
+          <div className="grid gap-5 @5xl:sticky @5xl:top-8">
+            <ProfileHeader site={site} />
+            {region("hero")}
+          </div>
+          <div className="grid gap-5">
+            {region("main")}
+            {region("footer")}
+          </div>
+        </div>
+      ) : (
+        <div
+          className={cn(
+            "mx-auto grid max-w-md gap-5 px-5 pt-8 pb-12 @5xl:gap-8 @5xl:px-10",
+            tpl.desktop === "grid" ? "@5xl:max-w-6xl" : "@5xl:max-w-3xl",
+          )}
+        >
+          <ProfileHeader site={site} />
+          {region("hero")}
+          {region("main")}
+          {region("footer")}
+        </div>
+      )}
     </div>
   );
 }
@@ -107,9 +141,17 @@ function ProfileHeader({ site }: { site: Site }) {
           {profile.title.trim().charAt(0).toUpperCase()}
         </span>
       )}
-      <h1 className="text-xl font-semibold tracking-tight">{profile.title}</h1>
+      <h1 className="text-xl font-semibold tracking-tight @5xl:text-3xl">
+        {profile.title}
+      </h1>
       {profile.subtitle && (
         <p className="text-sm text-[var(--bio-muted)]">{profile.subtitle}</p>
+      )}
+      {profile.about && (
+        // The editor labels this field "chỉ hiện trên desktop".
+        <p className="hidden max-w-xl text-sm whitespace-pre-line text-[var(--bio-muted)] @5xl:block">
+          {profile.about}
+        </p>
       )}
       {!!profile.socials.length && (
         <ul className="mt-1 flex flex-wrap justify-center gap-1.5">
@@ -256,7 +298,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
             <h2 className="text-base font-semibold">{block.title}</h2>
           )}
           {products.length ? (
-            <ul className="grid grid-cols-2 gap-3">
+            <ul className="grid grid-cols-2 gap-3 @5xl:grid-cols-4">
               {products.map((product) => {
                 const image = safeUrl(product.image);
                 return (

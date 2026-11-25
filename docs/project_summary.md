@@ -36,6 +36,8 @@ Update this file after each completed task: date, task ID, changed files, verifi
 
 ## Change log
 
+- 2026-11-25: Phase 4 (Renderer) finished. UI-02 adds the template desktop layouts through container queries and shows the desktop-only intro. Added render and snapshot tests in `src/lib/renderer/BioPage.test.tsx`, plus a `.tsx` include in the Vitest config. Verified: lint, typecheck, 26 tests, build, phone and desktop screenshots.
+
 - 2026-11-25: Phase 3 finished in code. FE-05 adds image upload to Storage (the server checks file content). FE-06 keeps products in the page draft and drops the sample products. FE-07 adds rename slug with redirects for published pages, plus delete page. Verified: lint, typecheck, 19 tests, build, RLS suite on local Postgres, screenshot. Not verified against live Supabase. Migrations `20261125090000` and `20261125100000` were pushed to Supabase `link-bio-tree` on 2026-11-25 and checked over REST.
 
 - 2026-11-25: Template editor. Adds the renderer (UI-01), template starter content (UI-03 migration, not yet pushed) and a form-based block editor with a live preview (UI-04). v1 block types are link, card, banner, video and shop. Verified with lint, typecheck, 17 tests, build and screenshots. Not verified against live Supabase data.

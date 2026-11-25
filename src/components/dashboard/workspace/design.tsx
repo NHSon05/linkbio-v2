@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowUp, Eye, EyeOff, Pin } from "lucide-react";
 import { REGIONS, layoutOf, type Block, type RegionName, type Site } from "@/lib/schemas/site";
 import { templates } from "@/templates";
 import { TemplatePicker } from "@/components/dashboard/workspace/template-picker";
@@ -69,7 +70,7 @@ export function Design({ draft, update, locked }: { draft: Site; update: UpdateD
             onClick={() => move(region, i, -1)}
             aria-label="Lên"
           >
-            ↑
+            <ArrowUp />
           </Button>
           <Button
             variant="ghost"
@@ -78,7 +79,7 @@ export function Design({ draft, update, locked }: { draft: Site; update: UpdateD
             onClick={() => move(region, i, 1)}
             aria-label="Xuống"
           >
-            ↓
+            <ArrowDown />
           </Button>
         </>
       )}
@@ -88,17 +89,19 @@ export function Design({ draft, update, locked }: { draft: Site; update: UpdateD
         onClick={() => toggle(b.id, "pinned")}
         aria-pressed={!!b.pinned}
         title="Ghim lên đầu vùng"
+        aria-label="Ghim lên đầu vùng"
       >
-        📌
+        <Pin />
       </Button>
       <Button
         variant="ghost"
         size="icon-sm"
         onClick={() => toggle(b.id, "hidden")}
         aria-pressed={!!b.hidden}
-        title="Ẩn/hiện"
+        title={b.hidden ? "Hiện khối" : "Ẩn khối"}
+        aria-label={b.hidden ? "Hiện khối" : "Ẩn khối"}
       >
-        {b.hidden ? "🙈" : "👁"}
+        {b.hidden ? <EyeOff /> : <Eye />}
       </Button>
       <Select
         value={region ?? NONE}

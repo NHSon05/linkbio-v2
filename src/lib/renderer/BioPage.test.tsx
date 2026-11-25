@@ -1,8 +1,8 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { siteFromConfig, type Block } from "@/lib/schemas/site";
-import { BioPage } from "./BioPage";
+import { BioPage, FONT_SIZES, themeScaleVars } from "./BioPage";
 
 const render = (config: object) =>
   renderToStaticMarkup(
@@ -109,14 +109,42 @@ describe("BioPage", () => {
   });
 
   // UI-02: the preview and (Sprint 3) the public page render this exact markup.
-  const sql = readFileSync(
-    "supabase/migrations/20261125090000_template_starters.sql",
-    "utf8",
-  );
+  // Latest starter per template across all migrations (docs/template-authoring.md).
+  const sql = readdirSync("supabase/migrations")
+    .sort()
+    .map((f) => readFileSync(`supabase/migrations/${f}`, "utf8"))
+    .join("\n");
+  const starters = new Map<string, string>();
   for (const [, json, key] of sql.matchAll(
     /'(\{.*?\})'::jsonb where key = '([\w-]+)'/g,
   ))
+    starters.set(key, json);
+  for (const [key, json] of starters)
     it(`matches the ${key} starter snapshot`, () => {
       expect(render(JSON.parse(json.replaceAll("''", "'")))).toMatchSnapshot();
     });
+});
+
+describe("theme scale (V2-06)", () => {
+  it("adds no variables for the defaults", () => {
+    expect(themeScaleVars({})).toEqual({});
+    expect(
+      themeScaleVars({ fontSize: "md", spacing: "normal", width: "normal" }),
+    ).toEqual({});
+  });
+
+  it("scales text, spacing and width through the design-token variables", () => {
+    const html = page([], {
+      theme: { fontSize: "lg", spacing: "compact", width: "wide" },
+    });
+    expect(html).toContain("--font-size-sm:0.91rem");
+    expect(html).toContain("--spacing:0.2rem");
+    expect(html).toContain("--container-md:32rem");
+  });
+
+  it("mirrors the font sizes in tokens.css", () => {
+    const css = readFileSync("src/styles/tokens.css", "utf8");
+    for (const [step, rem] of Object.entries(FONT_SIZES))
+      expect(css).toMatch(new RegExp(`--font-size-${step}: ${rem}rem;`));
+  });
 });

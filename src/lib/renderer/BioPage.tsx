@@ -8,6 +8,7 @@ import {
   type Block,
   type RegionName,
   type Site,
+  type Theme,
 } from "@/lib/schemas/site";
 import { templates } from "@/templates";
 import { catalogFor } from "@/templates/catalog";
@@ -36,6 +37,27 @@ const NETWORKS: Record<string, string> = {
  * UI-01: renders a page config. Same component for the editor preview and (Sprint 3) the public page.
  * Pure: no hooks, no data fetching, so it renders on the server or client.
  */
+// V2-06: the theme overrides the design-token variables that Tailwind classes read (src/styles/tokens.css),
+// so text, spacing and width scale everywhere inside the page without touching each block.
+export const FONT_SIZES = { xs: 0.75, sm: 0.8125, base: 0.875, lg: 1, xl: 1.125, "2xl": 1.375, "3xl": 1.75 }; // rem, mirrors tokens.css
+const FONT_SCALE = { sm: 0.9, lg: 1.12 } as const;
+const SPACING = { compact: "0.2rem", relaxed: "0.3rem" } as const; // default --spacing is 0.25rem
+const WIDTH = {
+  narrow: { "--container-md": "24rem", "--container-3xl": "40rem" },
+  wide: { "--container-md": "32rem", "--container-3xl": "56rem" },
+} as const;
+
+/** CSS variables for the optional font size, spacing and width steps; empty for the defaults. */
+export function themeScaleVars(theme: Theme): Record<string, string> {
+  const vars: Record<string, string> = {};
+  if (theme.fontSize === "sm" || theme.fontSize === "lg")
+    for (const [step, rem] of Object.entries(FONT_SIZES))
+      vars[`--font-size-${step}`] = `${+(rem * FONT_SCALE[theme.fontSize]).toFixed(4)}rem`;
+  if (theme.spacing === "compact" || theme.spacing === "relaxed") vars["--spacing"] = SPACING[theme.spacing];
+  if (theme.width === "narrow" || theme.width === "wide") Object.assign(vars, WIDTH[theme.width]);
+  return vars;
+}
+
 export function BioPage({ site }: { site: Site }) {
   const tpl = templates[site.template] ?? templates.classic;
   const theme = themeOf(site, tpl);
@@ -52,6 +74,7 @@ export function BioPage({ site }: { site: Site }) {
     color: dark ? "#F7F7F7" : "#282828",
     // shortcut: only Sora is loaded (layout.tsx); other fonts fall back to the system font until a font loader exists.
     fontFamily: `"${theme.font ?? "Sora"}", var(--font-sora), system-ui, sans-serif`,
+    ...themeScaleVars(theme),
   } as CSSProperties;
 
   const region = (name: RegionName) => {

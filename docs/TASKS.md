@@ -83,15 +83,20 @@ Sprint 2 starts with a decision for FE-06: products live in `config.catalog` tod
 
 ## v2 backlog (planned 2026-11-26)
 
-Reconciled with `docs/plan.html` (Eosoft Linktree v2). Full Keep/Change/New/Drop table, acceptance criteria and open questions: `docs/sprint-plan-v2.md`. Nothing below is started. Database and SSO tasks stay `BLOCKED` until the open questions (Q1–Q12) are answered.
+Reconciled with `docs/plan.html` (Eosoft Linktree v2). Full Keep/Change/New/Drop table, acceptance criteria and open questions: `docs/sprint-plan-v2.md`. Nothing below is started. Database and SSO tasks stay `BLOCKED` until the open questions (Q1–Q12) are answered. Approved 2026-11-26: the `pages` table keeps its name.
 
-| Sprint | Goal                                                               | Tasks     | Status                                      |
-| ------ | ------------------------------------------------------------------ | --------- | ------------------------------------------- |
-| 5      | Audit, remote cache measurement, theme controls (no schema change) | V2-01..07 | TODO (V2-03 BLOCKED on Q1–Q2, V2-05 on Q12) |
-| 6      | Membership + global `/{slug}`                                      | V2-10..15 | BLOCKED on Q5–Q7                            |
-| 7      | SSO + Eosoft integration + external invalidation                   | V2-20..23 | BLOCKED on Q1–Q5                            |
-| 8      | Catalog `/{slug}/{category}/{subcategory}`                         | V2-30..32 | BLOCKED on Q8                               |
-| 9      | Remote E2E, security review, smoke tests, release gate             | V2-40..43 | TODO after Sprints 6–8                      |
+| ID    | Task                                                                                                                                                                                                                                                               | Evidence                                                                                                                                                                                                                                                                                                         |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| V2-06 | Theme controls "Cỡ chữ", "Khoảng cách", "Độ rộng nội dung" in Design (`ThemeSchema.fontSize/spacing/width`, fixed steps only). `BioPage` overrides the design-token variables (`--font-size-*`, `--spacing`, `--container-md/3xl`), so the steps scale every block | DONE 2026-11-26. 5 new Vitest tests (out-of-range values rejected, default adds no variables, variables applied, font sizes mirror `tokens.css`, switching template keeps blocks/layout/theme); starter snapshots unchanged; screenshots of default vs Lớn/Gọn/Hẹp. "Hẹp" only shows on screens wider than 24rem |
+| V2-07 | `docs/template-authoring.md`: converting an approved design into `src/templates/<id>` + one migration; starter tests now read every migration (latest starter per template wins)                                                                                   | DONE 2026-11-26. 42 tests pass with the new test loading                                                                                                                                                                                                                                                         |
+
+| Sprint | Goal                                                               | Tasks     | Status                                                               |
+| ------ | ------------------------------------------------------------------ | --------- | -------------------------------------------------------------------- |
+| 5      | Audit, remote cache measurement, theme controls (no schema change) | V2-01..07 | IN_PROGRESS: V2-06, V2-07 DONE; V2-03 BLOCKED on Q1–Q2, V2-05 on Q12 |
+| 6      | Membership + global `/{slug}`                                      | V2-10..15 | BLOCKED on Q5–Q7                                                     |
+| 7      | SSO + Eosoft integration + external invalidation                   | V2-20..23 | BLOCKED on Q1–Q5                                                     |
+| 8      | Catalog `/{slug}/{category}/{subcategory}`                         | V2-30..32 | BLOCKED on Q8                                                        |
+| 9      | Remote E2E, security review, smoke tests, release gate             | V2-40..43 | TODO after Sprints 6–8                                               |
 
 ## Handoff checklist
 

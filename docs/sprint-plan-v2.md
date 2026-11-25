@@ -1,6 +1,6 @@
 # Sprint Plan v2 — Reconciled (2026-11-26)
 
-Merges `docs/plan.html` / `docs/plan (2).md` (Eosoft Linktree v2) with what this repository has already built and verified (see `docs/TASKS.md` "Done", CI run on `215835f`). Status: **plan only, nothing implemented**. Database and SSO work is gated on the open questions in §4.
+Merges `docs/plan.html` / `docs/plan (2).md` (Eosoft Linktree v2) with what this repository has already built and verified (see `docs/TASKS.md` "Done", CI run on `215835f`). Status: Sprint 5 started 2026-11-26 (V2-06 and V2-07 done, see `docs/TASKS.md`). Database and SSO work is gated on the open questions in §4.
 
 ## 1. Product decisions applied (2026-11-26)
 
@@ -63,6 +63,8 @@ Legend: **Keep** = already done and verified here. **Change** = exists but must 
 ## 3. Sprint breakdown
 
 One-week sprints, one developer, continuing from Sprints 1–4. Owner = responsible subagent (`.claude/agents/*`). **Gate** = cannot start until the listed question in §4 is answered.
+
+**Approved 2026-11-26:** `pages` keeps its name and becomes the Linktree table; membership is added beside it (V2-10).
 
 ### Sprint 5 — Audit, measurement, no schema change
 

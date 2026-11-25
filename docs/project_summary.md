@@ -36,6 +36,8 @@ Update this file after each completed task: date, task ID, changed files, verifi
 
 ## Change log
 
+- 2026-11-26: Sprint 5 started on `feat/v2-sprint-5`. V2-06: font size, spacing and content-width steps in Design, applied by `BioPage` through the design-token variables (5 new tests, snapshots unchanged, screenshots checked). V2-07: `docs/template-authoring.md`; the starter tests now read every migration. Approved: `pages` keeps its name. Checks: lint, typecheck, 42 tests, build.
+
 - 2026-11-26: v2 planning (no code). Reconciled `docs/plan.html` (Eosoft Linktree v2) with the built work in `docs/sprint-plan-v2.md`: Keep/Change/New/Drop for every v2 item, Sprints 5–9 (V2-01..43), and 12 open questions for Hoàng and the mentor. Decisions: system-wide `/{slug}` with suggested slugs; keep the JSON block/template model and one renderer (no user HTML, GrapesJS dropped). `TASKS.md` gets a v2 backlog section; history unchanged.
 
 - 2026-11-26: Real 404 for missing public pages. With Cache Components the page streams its shell first, which fixes the status at 200, so `src/proxy.ts` now checks `/{username}/{slug}` before rendering (`src/lib/publishing/exists.ts`, using the anon `get_published_page` RPC and asking only for `redirect_to`) and rewrites missing pages to the not-found page with status 404. Found pages are remembered per instance for 60 s, so a public view usually skips the database. If Supabase errors, the request goes through. Verified locally against the live Supabase: unknown paths 404, app routes 200. 5 unit tests added; E2E now asserts status codes (runs in CI).

@@ -16,7 +16,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="vi" className={`${geistMono.variable} ${sora.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         {children}
-        <Toaster />
+        {/* Top: the editor's save/publish bar is at the bottom right, where toasts would cover it. */}
+        <Toaster position="top-center" />
       </body>
     </html>
   );

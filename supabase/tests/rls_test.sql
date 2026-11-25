@@ -91,6 +91,23 @@ select tests.ok((select revision from public.save_draft(:'page_a', 1, '{"schemaV
 select tests.throws(format($$select public.save_draft(%L, 1, '{"schemaVersion":1,"template":"classic"}')$$, :'page_a'), 'PT409', 'stale revision rejected');
 select tests.throws(format($$select public.save_draft(%L, 2, '{"schemaVersion":2,"template":"classic"}')$$, :'page_a'), 'PT400', 'wrong schemaVersion rejected');
 select tests.ok((select t.key from public.pages p join public.templates t on t.id = p.template_id where p.id = :'page_a') = 'shop-grid', 'template follows saved config');
+
+-- rename_page (FE-07)
+select tests.throws(format($$select public.rename_page(%L, 'x')$$, :'page_b'), 'PT404', 'A cannot rename B page');
+select tests.throws(format($$select public.rename_page(%L, 'Bad Slug')$$, :'page_a'), 'PT400', 'rename rejects invalid slug');
+select (public.create_page('classic', 'other')).id as page_other \gset
+select tests.throws(format($$select public.rename_page(%L, 'other')$$, :'page_a'), 'PT409', 'rename rejects own taken slug');
+select tests.ok((public.rename_page(:'page_a', 'tech-2')).slug = 'tech-2', 'rename updates slug');
+select tests.ok((select count(*) from public.url_redirects) = 0, 'unpublished rename adds no redirect');
+select tests.throws($$insert into public.url_redirects (page_id, old_path, new_path) values (gen_random_uuid(), '/son/a', '/son/b')$$, '42501', 'client cannot write redirects');
+reset role;
+update public.pages set live_version_id = draft_version_id where id = :'page_a';
+set local role authenticated;
+select (public.rename_page(:'page_a', 'tech-3')).id is not null as renamed \gset
+select tests.ok((select new_path from public.url_redirects where old_path = '/son/tech-2') = '/son/tech-3', 'published rename redirects old path');
+select (public.rename_page(:'page_a', 'tech-2')).id is not null as renamed \gset
+select tests.ok((select count(*) from public.url_redirects where old_path = '/son/tech-2') = 0, 'reused path stops redirecting');
+select tests.ok((select new_path from public.url_redirects where old_path = '/son/tech-3') = '/son/tech-2', 'previous path redirects to current');
 reset role;
 select tests.ok((select count(*) from public.pages where id = :'page_b') = 1, 'B page survived A delete');
 
@@ -129,6 +146,7 @@ select tests.ok((select count(*) from public.profiles where id in (:'user_a', :'
 select tests.throws($$select count(*) from public.pages$$, '42501', 'anon cannot read pages');
 select tests.throws($$select count(*) from public.page_versions$$, '42501', 'anon cannot read drafts');
 select tests.throws($$select public.create_page('classic', 'x')$$, '42501', 'anon cannot call create_page');
+select tests.throws($$select public.rename_page(gen_random_uuid(), 'x')$$, '42501', 'anon cannot call rename_page');
 reset role;
 
 -- ---------- cascade ----------

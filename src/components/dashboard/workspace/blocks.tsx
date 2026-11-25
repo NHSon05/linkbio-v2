@@ -25,6 +25,7 @@ import {
 } from "@/lib/schemas/site";
 import { templates } from "@/templates";
 import { cn } from "@/lib/utils";
+import { ImageField } from "./image-field";
 import type { UpdateDraft } from "./products";
 
 /** Content editor: add, edit, reorder and delete blocks in each template region. */
@@ -237,7 +238,15 @@ function BlockRow({
               typeof block[field.key] === "string"
                 ? (block[field.key] as string)
                 : "";
-            return (
+            return field.kind === "image" ? (
+              <ImageField
+                key={field.key}
+                id={id}
+                label={field.label}
+                value={value}
+                onChange={(url) => onField(field.key, url)}
+              />
+            ) : (
               <div key={field.key} className="grid gap-1.5">
                 <Label htmlFor={id}>{field.label}</Label>
                 {field.kind === "textarea" ? (

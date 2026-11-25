@@ -37,7 +37,6 @@ export function Profile({ draft, update }: { draft: Site; update: UpdateDraft })
         <ImageField
           id="profile-avatar"
           label="Ảnh đại diện"
-          slug={draft.slug}
           value={draft.profile.avatar ?? ""}
           onChange={(url) =>
             update((d) => {
@@ -48,7 +47,6 @@ export function Profile({ draft, update }: { draft: Site; update: UpdateDraft })
         <ImageField
           id="profile-cover"
           label="Ảnh bìa"
-          slug={draft.slug}
           value={draft.profile.cover ?? ""}
           onChange={(url) =>
             update((d) => {

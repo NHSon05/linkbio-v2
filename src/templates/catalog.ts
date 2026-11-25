@@ -1,20 +1,6 @@
-import { ProductDbSchema, type ProductDb, type Site } from "@/lib/schemas/site";
-import samples from "./products.json" with { type: "json" };
+import type { ProductDb, Site } from "@/lib/schemas/site";
 
-const legacy = ProductDbSchema.parse(samples);
-
-/** Trang cũ dùng các bộ sưu tập từ dữ liệu mẫu cho đến khi lưu danh mục riêng. */
+/** FE-06: products live in the page config (saved with the draft, published with the page). */
 export function catalogFor(site: Site): ProductDb {
-  if (site.catalog) return site.catalog;
-  const collectionIds = new Set<string>();
-  for (const shop of site.blocks.filter((block) => block.type === "shop")) {
-    const ids = Array.isArray(shop.collections) ? shop.collections : [];
-    const matches = legacy.collections.filter((collection) => ids.includes(collection.id));
-    for (const collection of matches.length ? matches : legacy.collections.slice(0, 1)) {
-      collectionIds.add(collection.id);
-    }
-  }
-  const collections = legacy.collections.filter((collection) => collectionIds.has(collection.id));
-  const itemIds = new Set(collections.flatMap((collection) => collection.items));
-  return { collections, products: legacy.products.filter((product) => itemIds.has(product.id)) };
+  return site.catalog ?? { products: [], collections: [] };
 }

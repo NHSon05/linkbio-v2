@@ -1,6 +1,6 @@
 # Sprint Plan v2 — Reconciled (2026-11-26)
 
-Merges `docs/plan.html` / `docs/plan (2).md` (Eosoft Linktree v2) with what this repository has already built and verified (see `docs/TASKS.md` "Done", CI run on `215835f`). Status: Sprint 5 started 2026-11-26 (V2-06 and V2-07 done, see `docs/TASKS.md`). Database and SSO work is gated on the open questions in §4.
+Merges the Eosoft Linktree v2 proposal (`docs/v2-proposal/plan-v2.md`) with what this repository has already built and verified (see `docs/TASKS.md` "Done", CI run on `215835f`). Status: Sprint 5 started 2026-11-26 (V2-06 and V2-07 done, see `docs/TASKS.md`). Database and SSO work is gated on the open questions in §4.
 
 ## 1. Product decisions applied (2026-11-26)
 

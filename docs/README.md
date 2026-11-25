@@ -1,18 +1,20 @@
-# LinkBio — Architecture & Agent Documentation
+# LinkBio — Docs
 
-This folder is a **planning/specification package**, not an implemented application.
+## Project docs (kept current)
 
-## Start here
+| File                    | What it holds                                                                             |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `project_summary.md`    | Status, decisions and the dated change log                                                |
+| `TASKS.md`              | Task backlog with evidence for every done task; v2 backlog at the end                     |
+| `ARCHITECTURE.md`       | System design, publishing and caching                                                     |
+| `data-model.md`         | Supabase tables, functions and RLS                                                        |
+| `API_Contract.md`       | Routes, payloads, errors and the page config contract                                     |
+| `plan.md`               | Original (v1) roadmap                                                                     |
+| `sprint-plan-v2.md`     | v2 plan reconciled with the built code: Keep/Change/New/Drop, Sprints 5–9, open questions |
+| `template-authoring.md` | How to turn an approved design into a template                                            |
 
-1. `project_summary.md` — current decisions/status.
-2. `ARCHITECTURE.md` — system design and publishing lifecycle.
-3. `data-model.md` — Supabase tables and RLS requirements.
-4. `API_Contract.md` — routes, payloads, errors and config contract.
-5. `plan.md` — phased roadmap.
-6. `TASKS.md` — executable task backlog.
-7. `AGENTS.md` — subagent router and operating rules.
-8. `agents/` — nine role-specific prompts (including orchestrator).
+Agent routing and rules: `AGENTS.md` / `CLAUDE.md` at the repository root and `.claude/`.
 
-## First coding milestone
+## `v2-proposal/` (input, not maintained)
 
-Implement F-01 and F-02, then DB-01 and UI-01. Do not begin a production deploy until authentication, RLS and publish-state tests pass.
+The Eosoft Linktree v2 proposal as received (2026-11-25): `plan-v2.md`, `url-routing.md`, `template-visual-editor.md`, `testing-strategy.md`, `repository-structure.md`. Where they conflict with `sprint-plan-v2.md`, the sprint plan wins. For example, user HTML import and GrapesJS were dropped, and templates stay JSON plus the shared renderer.

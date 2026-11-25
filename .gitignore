@@ -30,12 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Claude Code local settings and installed skill links
+# Claude Code local settings and skills (skills stay local, not in the repository)
 /.claude/settings.local.json
-/.claude/skills/*
-!/.claude/skills/*/
-!/.claude/skills/*.md
-!/.claude/skills/.mcp.json.example
+/.claude/skills/
 
 # env files and shareable templates
 .env*

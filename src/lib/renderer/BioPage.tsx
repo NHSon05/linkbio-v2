@@ -63,7 +63,7 @@ export function BioPage({ site }: { site: Site }) {
         data-region={name}
         className={cn(
           variant === "carousel"
-            ? "-mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] *:w-[78%] *:shrink-0 *:snap-start @5xl:*:w-[calc(50%-0.375rem)]"
+            ? "-mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 scrollbar-none *:w-[78%] *:shrink-0 *:snap-start @5xl:*:w-[calc(50%-0.375rem)]"
             : cn("grid gap-3", variant === "grid-2" && "grid-cols-2"),
           // Wide screens: the main list/grid uses the template's desktop column count.
           name === "main" &&
@@ -124,7 +124,7 @@ function ProfileHeader({ site }: { site: Site }) {
         <img
           alt=""
           src={cover}
-          className="mb-2 h-32 w-full rounded-[var(--bio-radius)] object-cover"
+          className="mb-2 h-32 w-full rounded-(--bio-radius) object-cover"
         />
       )}
       {avatar ? (
@@ -136,7 +136,7 @@ function ProfileHeader({ site }: { site: Site }) {
       ) : (
         <span
           aria-hidden
-          className="grid size-20 place-items-center rounded-full bg-[var(--bio-accent)] text-2xl font-semibold text-[#282828]"
+          className="grid size-20 place-items-center rounded-full bg-(--bio-accent) text-2xl font-semibold text-[#282828]"
         >
           {profile.title.trim().charAt(0).toUpperCase()}
         </span>
@@ -145,11 +145,11 @@ function ProfileHeader({ site }: { site: Site }) {
         {profile.title}
       </h1>
       {profile.subtitle && (
-        <p className="text-sm text-[var(--bio-muted)]">{profile.subtitle}</p>
+        <p className="text-sm text-(--bio-muted)">{profile.subtitle}</p>
       )}
       {profile.about && (
         // The editor labels this field "chỉ hiện trên desktop".
-        <p className="hidden max-w-xl text-sm whitespace-pre-line text-[var(--bio-muted)] @5xl:block">
+        <p className="hidden max-w-xl text-sm whitespace-pre-line text-(--bio-muted) @5xl:block">
           {profile.about}
         </p>
       )}
@@ -164,7 +164,7 @@ function ProfileHeader({ site }: { site: Site }) {
                   data-block-id={"social-" + social.type}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
-                  className="block rounded-full bg-[var(--bio-surface)] px-3 py-1 text-xs font-medium"
+                  className="block rounded-full bg-(--bio-surface) px-3 py-1 text-xs font-medium"
                 >
                   {NETWORKS[social.type] ?? social.type}
                 </a>
@@ -213,7 +213,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
         <MaybeLink
           url={block.url}
           trackId={block.id}
-          className="block rounded-[var(--bio-button-radius)] bg-[var(--bio-accent)] px-5 py-3.5 text-center text-sm font-semibold text-[#282828]"
+          className="block rounded-(--bio-button-radius) bg-(--bio-accent) px-5 py-3.5 text-center text-sm font-semibold text-[#282828]"
         >
           {block.text || block.title || "Liên kết"}
         </MaybeLink>
@@ -224,7 +224,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
         <MaybeLink
           url={block.url}
           trackId={block.id}
-          className="block overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-surface)]"
+          className="block overflow-hidden rounded-(--bio-radius) bg-(--bio-surface)"
         >
           {image && (
             <img
@@ -238,7 +238,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
               {block.text || block.title}
             </strong>
             {block.subtext && (
-              <span className="mt-1 block text-xs text-[var(--bio-muted)]">
+              <span className="mt-1 block text-xs text-(--bio-muted)">
                 {block.subtext}
               </span>
             )}
@@ -252,7 +252,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
         <MaybeLink
           url={block.url}
           trackId={block.id}
-          className="relative block overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-accent)] px-5 py-6 text-[#282828]"
+          className="relative block overflow-hidden rounded-(--bio-radius) bg-(--bio-accent) px-5 py-6 text-[#282828]"
         >
           {image && (
             <img
@@ -273,7 +273,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
     case "video": {
       const embed = videoEmbed(block.url);
       return (
-        <figure className="overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-surface)]">
+        <figure className="overflow-hidden rounded-(--bio-radius) bg-(--bio-surface)">
           {embed ? (
             <iframe
               src={embed}
@@ -284,7 +284,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
               className="aspect-video w-full border-0"
             />
           ) : (
-            <div className="grid aspect-video place-items-center p-4 text-center text-xs text-[var(--bio-muted)]">
+            <div className="grid aspect-video place-items-center p-4 text-center text-xs text-(--bio-muted)">
               Dán link YouTube hoặc TikTok để hiện video
             </div>
           )}
@@ -314,7 +314,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
                     <MaybeLink
                       url={product.affiliateUrl || product.url}
                       trackId={product.id}
-                      className="block h-full overflow-hidden rounded-[var(--bio-radius)] bg-[var(--bio-surface)]"
+                      className="block h-full overflow-hidden rounded-(--bio-radius) bg-(--bio-surface)"
                     >
                       {image && (
                         <img
@@ -334,7 +334,7 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
               })}
             </ul>
           ) : (
-            <p className="rounded-[var(--bio-radius)] bg-[var(--bio-surface)] p-4 text-center text-xs text-[var(--bio-muted)]">
+            <p className="rounded-(--bio-radius) bg-(--bio-surface) p-4 text-center text-xs text-(--bio-muted)">
               Chưa có sản phẩm
             </p>
           )}

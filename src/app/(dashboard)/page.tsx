@@ -29,9 +29,9 @@ async function Dashboard() {
   if (!username) redirect("/onboarding");
   const pages = await listPageDrafts(user.id, username);
   return (
-    // Remount when the page list changes (e.g. after create_page) so local drafts reset.
+    // Remount when pages are created, renamed or deleted so local drafts reset.
     <Editor
-      key={user.id + pages.map((page) => page.id).join()}
+      key={user.id + pages.map((page) => page.id + page.site.slug).join()}
       email={user.email ?? ""}
       landingUrl={dashboardOrigin()}
       pages={pages}

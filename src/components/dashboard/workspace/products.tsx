@@ -2,8 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { Copy, Link2, Eye, EyeOff, Pencil, Plus, ShoppingBag, Trash2 } from "lucide-react";
-import { formatPrice, layoutOf, ProductSchema, type Product, type Site } from "@/lib/schemas/site";
+import { layoutOf, ProductSchema, type Product, type Site } from "@/lib/schemas/site";
 import { catalogFor } from "@/templates/catalog";
+import { ImageField } from "./image-field";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -104,8 +105,6 @@ export function ProductManager({
       url: field("url"),
       affiliateUrl: field("affiliateUrl") || undefined,
       image: field("image") || undefined,
-      price: field("price") || undefined,
-      currency: field("currency"),
       visible: field("visible") === "yes",
     });
     if (!parsed.success || !parsed.data.title) {
@@ -217,7 +216,6 @@ export function ProductManager({
                     <Badge variant="outline" className="max-w-32 bg-card">
                       {new URL(p.url).hostname.replace(/^www\./, "")}
                     </Badge>
-                    {formatPrice(p.price, p.currency)}
                     {p.visible === false && " · Đã ẩn"}
                   </span>
                 </span>
@@ -297,7 +295,6 @@ export function ProductManager({
                   <div className="flex items-center gap-3">
                     <ProductThumb product={modal.product} landingUrl={landingUrl} />
                     <div>
-                      <p>{formatPrice(modal.product.price, modal.product.currency) || "Chưa có giá"}</p>
                       <p className="text-xs text-muted-foreground">
                         {modal.product.visible === false ? "Đã ẩn" : "Hiển thị"}
                       </p>
@@ -353,8 +350,6 @@ export function ProductManager({
                       { key: "title", label: "Tên sản phẩm" },
                       { key: "url", label: "Liên kết sản phẩm" },
                       { key: "affiliateUrl", label: "Liên kết affiliate" },
-                      { key: "image", label: "Đường dẫn ảnh" },
-                      { key: "price", label: "Giá" },
                     ] as const
                   ).map(({ key, label }) => (
                     <div key={key} className="grid gap-1">
@@ -368,19 +363,8 @@ export function ProductManager({
                       />
                     </div>
                   ))}
+                  <ProductImage defaultValue={modal.product.image ?? ""} />
                   <div className="flex flex-wrap gap-3">
-                    <Select name="currency" defaultValue={modal.product.currency || "VND"}>
-                      <SelectTrigger aria-label="Đơn vị tiền">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[...new Set(["VND", "USD", modal.product.currency || "VND"])].map((v) => (
-                          <SelectItem key={v} value={v}>
-                            {v}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <Select name="visible" defaultValue={modal.product.visible === false ? "no" : "yes"}>
                       <SelectTrigger aria-label="Hiển thị sản phẩm">
                         <SelectValue />
@@ -423,5 +407,16 @@ export function ProductManager({
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/** Upload field for the product image; the hidden input carries the URL into the form's FormData. */
+function ProductImage({ defaultValue }: { defaultValue: string }) {
+  const [image, setImage] = useState(defaultValue);
+  return (
+    <>
+      <ImageField id="product-image" label="Ảnh sản phẩm" value={image} onChange={setImage} />
+      <input type="hidden" name="image" value={image} />
+    </>
   );
 }

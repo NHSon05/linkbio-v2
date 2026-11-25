@@ -12,6 +12,7 @@ describe("safeUrl", () => {
       "JaVaScRiPt:alert(1)",
       "data:text/html,x",
       "//evil.com",
+      "/\\evil.com",
       "vbscript:x",
       "",
       undefined,

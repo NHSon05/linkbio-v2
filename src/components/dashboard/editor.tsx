@@ -24,6 +24,7 @@ import {
   ProductManager,
   type UpdateDraft,
 } from "@/components/dashboard/workspace/products";
+import { PageSettings } from "@/components/dashboard/workspace/page-settings";
 import { Profile } from "@/components/dashboard/workspace/profile";
 import { SocialLinks } from "@/components/dashboard/workspace/social-links";
 
@@ -69,6 +70,11 @@ export default function Editor({
     : pages[0]?.site.slug;
   const draft = slug ? drafts[slug] : undefined;
   const dirty = !!slug && JSON.stringify(saved[slug]) !== JSON.stringify(draft);
+  // Rename/delete remount the editor, which would drop unsaved edits on any page.
+  const anyDirty = pages.some(
+    ({ site }) =>
+      JSON.stringify(saved[site.slug]) !== JSON.stringify(drafts[site.slug]),
+  );
 
   const update: UpdateDraft = (fn) => {
     if (!slug || saving) return;
@@ -188,7 +194,16 @@ export default function Editor({
                       </>
                     )}
                     {view === "slug" && (
-                      <Design draft={draft} update={update} locked={saving} />
+                      <>
+                        <PageSettings
+                          key={slug}
+                          pageId={meta[slug!].id}
+                          path={slug!}
+                          published={meta[slug!].published}
+                          dirty={anyDirty}
+                        />
+                        <Design draft={draft} update={update} locked={saving} />
+                      </>
                     )}
                   </fieldset>
                 )}

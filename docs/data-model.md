@@ -106,3 +106,5 @@ Use `auth.uid() = owner_id` (or joins to pages for child rows), `WITH CHECK` for
 - A published version is immutable.
 - Only owner may initiate publish; only trusted server may transition live deployment state.
 - Deleting a page must account for public URLs, redirects and media cleanup.
+
+- 2026-11-25: `rename_page(page_id, new_slug)` is a security definer function. It checks ownership, maps errors to PT400/403/404/409, and writes `url_redirects` only for pages that have a live version. A rename deletes any redirect from the new path and points older paths straight at the new one. Products stay in the page config (`catalog`). The `products` and `page_products` tables are unused for now.

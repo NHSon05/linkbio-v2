@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- user images come from many hosts; next/image needs each host configured. */
 import type { CSSProperties, ReactNode } from "react";
 import {
-  formatPrice,
   luminance,
   regionBlocks,
   themeOf,
@@ -276,9 +275,6 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
                       <span className="block p-3">
                         <span className="line-clamp-2 block text-xs font-semibold">
                           {product.title}
-                        </span>
-                        <span className="mt-1 block text-xs text-[var(--bio-muted)]">
-                          {formatPrice(product.price, product.currency)}
                         </span>
                       </span>
                     </MaybeLink>

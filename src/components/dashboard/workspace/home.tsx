@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, Eye, MousePointer2, Percent, ShoppingBag, ChartNoAxesColumn } from "lucide-react";
-import { formatPrice, type Site } from "@/lib/schemas/site";
+import { type Site } from "@/lib/schemas/site";
 import { catalogFor } from "@/templates/catalog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -183,7 +183,6 @@ export function HomeOverview({
                 <li key={p.id} className="flex items-center gap-3 py-2">
                   <ProductThumb product={p} landingUrl={landingUrl} />
                   <span className="min-w-0 flex-1 truncate font-medium">{p.title}</span>
-                  <span className="text-xs">{formatPrice(p.price, p.currency)}</span>
                 </li>
               ))}
             </ul>

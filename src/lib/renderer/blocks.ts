@@ -4,7 +4,7 @@ import type { Block } from "@/lib/schemas/site";
 export type BlockField = {
   key: "text" | "subtext" | "title" | "url" | "thumbnail";
   label: string;
-  kind: "text" | "textarea" | "url";
+  kind: "text" | "textarea" | "url" | "image";
   placeholder?: string;
 };
 
@@ -33,8 +33,8 @@ export const BLOCK_SPECS: Record<string, BlockSpec> = {
       { key: "subtext", label: "Mô tả", kind: "textarea" },
       {
         key: "thumbnail",
-        label: "Ảnh (đường dẫn)",
-        kind: "url",
+        label: "Ảnh",
+        kind: "image",
         placeholder: "https://…",
       },
       {
@@ -53,8 +53,8 @@ export const BLOCK_SPECS: Record<string, BlockSpec> = {
       { key: "subtext", label: "Dòng phụ", kind: "text" },
       {
         key: "thumbnail",
-        label: "Ảnh nền (đường dẫn)",
-        kind: "url",
+        label: "Ảnh nền",
+        kind: "image",
         placeholder: "https://…",
       },
       {
@@ -101,9 +101,8 @@ export function blockLabel(block: Block) {
 export function safeUrl(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   const url = value.trim();
-  if (url.startsWith("/") && !url.startsWith("//")) return url;
-  // shortcut: blob: is a local image picked in the editor; it only works in that browser until uploads land (FE-05).
-  if (url.startsWith("blob:")) return url;
+  // "//x" and "/\\x" are other sites in browsers, not same-site paths.
+  if (/^\/(?![/\\])/.test(url)) return url;
   try {
     const parsed = new URL(url);
     return parsed.protocol === "https:" || parsed.protocol === "http:"
@@ -117,8 +116,7 @@ export function safeUrl(value: unknown): string | undefined {
 /** YouTube/TikTok page URL → embed URL. Other hosts are never embedded. */
 export function videoEmbed(value: unknown): string | undefined {
   const href = safeUrl(value);
-  if (!href || href.startsWith("/") || href.startsWith("blob:"))
-    return undefined;
+  if (!href || href.startsWith("/")) return undefined;
   const url = new URL(href);
   const host = url.hostname.replace(/^(www\.|m\.)/, "");
   let id: string | undefined;

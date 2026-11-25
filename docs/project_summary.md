@@ -36,6 +36,8 @@ Update this file after each completed task: date, task ID, changed files, verifi
 
 ## Change log
 
+- 2026-11-25: Phase 3 finished in code. FE-05 adds image upload to Storage (the server checks file content). FE-06 keeps products in the page draft and drops the sample products. FE-07 adds rename slug with redirects for published pages, plus delete page. Verified: lint, typecheck, 19 tests, build, RLS suite on local Postgres, screenshot. Not verified against live Supabase. Migrations `20261125090000` and `20261125100000` were pushed to Supabase `link-bio-tree` on 2026-11-25 and checked over REST.
+
 - 2026-11-25: Template editor. Adds the renderer (UI-01), template starter content (UI-03 migration, not yet pushed) and a form-based block editor with a live preview (UI-04). v1 block types are link, card, banner, video and shop. Verified with lint, typecheck, 17 tests, build and screenshots. Not verified against live Supabase data.
 
 - 2026-11-24 — Sprint 1: D-02 (pnpm only), OPS-01 (GitHub Actions CI + Vitest, 14 tests), FE-02..04 (dashboard reads/creates/saves real pages via `create_page`/`save_draft`). Verified: lint, typecheck, tests, build, screenshots with sample props. Not verified: live sign-in → create → save against Supabase; D-03 pending (Supabase dashboard).

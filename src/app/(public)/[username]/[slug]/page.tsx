@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { BioPage } from "@/lib/renderer/BioPage";
+import { PageTracker } from "@/lib/publishing/PageTracker";
 import { getPublishedPage } from "@/lib/publishing/published";
 
 type Params = Promise<{ username: string; slug: string }>;
@@ -25,6 +26,7 @@ async function PublishedContent({ params }: { params: Params }) {
   return (
     <main className="min-h-dvh">
       <BioPage site={page.site} />
+      <PageTracker path={`/${username}/${slug}`} />
     </main>
   );
 }

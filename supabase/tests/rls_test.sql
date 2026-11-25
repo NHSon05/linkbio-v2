@@ -11,7 +11,7 @@
 begin;
 
 create schema tests;
-grant usage on schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
 
 create function tests.ok(passed boolean, label text) returns void language plpgsql as $$
 begin
@@ -27,7 +27,7 @@ exception when others then
   if sqlstate like 'FAILED%' or sqlerrm like 'FAILED (no error)%' then raise; end if;
   if sqlstate <> code then raise exception 'FAILED: % (got % %, want %)', label, sqlstate, sqlerrm, code; end if;
 end $$;
-grant execute on all functions in schema tests to anon, authenticated;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 -- ---------- setup (superuser) ----------
 insert into auth.users (id, raw_user_meta_data) values
@@ -122,8 +122,23 @@ select tests.ok((select redirect_to from public.get_published_page('son', 'tech-
 select tests.ok((select count(*) from public.get_published_page('tien', 'tech-review')) = 0, 'unpublished page is not readable');
 select tests.ok((select count(*) from public.get_published_page('son', 'other')) = 0, 'never-published page is not readable');
 select tests.throws(format($$select * from public.publish_page(%L, 3)$$, :'page_a'), '42501', 'anon cannot publish');
+
+-- record_page_event / page_traffic (AN-01, AN-02)
+select tests.throws($$select public.record_page_event('son', 'tech-2', 'view')$$, '42501', 'anon cannot record events directly');
+select tests.throws($$select * from public.page_traffic(30)$$, '42501', 'anon cannot read traffic');
+reset role;
+set local role service_role;
+select tests.ok(public.record_page_event('son', 'tech-2', 'view'), 'server records a view on a live page');
+select tests.ok(public.record_page_event('son', 'tech-2', 'click', 'b-link-1', 'facebook.com', 'fb'), 'server records a click');
+select tests.ok(not public.record_page_event('son', 'other', 'view'), 'unpublished page gets no events');
+select tests.throws($$select public.record_page_event('son', 'tech-2', 'purchase')$$, '23514', 'unknown event type rejected');
 reset role;
 set local role authenticated;
+select tests.throws($$select public.record_page_event('son', 'tech-2', 'view')$$, '42501', 'signed-in users cannot record events directly');
+select tests.ok((select views = 1 and clicks = 1 from public.page_traffic(30) where page_id = :'page_a'), 'owner sees own daily views and clicks');
+select set_config('request.jwt.claims', json_build_object('sub', :'user_b', 'role', 'authenticated')::text, true);
+select tests.ok((select count(*) from public.page_traffic(30)) = 0, 'B cannot see A traffic');
+select set_config('request.jwt.claims', json_build_object('sub', :'user_a', 'role', 'authenticated')::text, true);
 reset role;
 select tests.ok((select count(*) from public.pages where id = :'page_b') = 1, 'B page survived A delete');
 

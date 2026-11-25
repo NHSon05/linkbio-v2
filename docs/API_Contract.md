@@ -101,14 +101,21 @@ Implemented as the `publishPage(pageId, expectedRevision)` server action over `p
 
 ```json
 {
-  "pageId": "<uuid>",
-  "eventType": "click",
-  "blockId": "product-01",
+  "path": "/son/tech-review",
+  "type": "click",
+  "blockId": "b-link-1",
+  "referrerHost": "facebook.com",
   "utmSource": "facebook"
 }
 ```
 
-202 `{ "accepted": true }`. Do not trust event fields for authorization or billing; validate, deduplicate/rate-limit, minimize IP/PII.
+Implemented in `src/app/api/v1/events/route.ts` (2026-11-25). The public page knows its path, not its page id, so events name the path and the server resolves the live page. `blockId` is the clicked block's id, the product id, or `social-<type>`.
+
+- 202 `{ "accepted": true }`, also for unknown or unpublished paths, so the endpoint does not reveal which pages exist.
+- 400 for an invalid body, 413 for a body over 1 KB, 403 for another origin, and 429 for more than 60 events per minute per IP.
+- 503 when storage is unavailable or `SUPABASE_SECRET_KEY` is missing.
+
+No cookies or IPs are stored. Views are counted once per tab session. Do not trust event fields for authorization or billing.
 
 ## JSON config contract
 

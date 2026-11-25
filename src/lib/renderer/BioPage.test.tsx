@@ -34,7 +34,7 @@ describe("BioPage", () => {
       { id: "s", type: "shop", title: "Shop" },
     ]);
     expect(html).toContain(
-      'href="https://shopee.vn/" target="_blank" rel="noopener noreferrer nofollow"',
+      'href="https://shopee.vn/" data-block-id="l" target="_blank" rel="noopener noreferrer nofollow"',
     );
     for (const text of [
       "Card title",

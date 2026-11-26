@@ -25,11 +25,13 @@
 ## Global invariants
 
 - Next.js App Router + TypeScript + Tailwind CSS v4 + Supabase + Vercel.
-- URL: `/{username}/{pageSlug}`; separate owner/page ID; same template/slug allowed across different users.
+- Plan of record: `docs/plan.md` (v2) and `docs/sprint-plan-v2.md`. Database and SSO tasks wait for the open questions there.
+- URL (v2 target, approved 2026-11-26): system-wide `/{slug}` and `/{slug}/{category}/{subcategory}`; immutable page ID; reserved names rejected. The code serves `/{username}/{pageSlug}` until Sprint 6 migrates it; keep that working and redirect old URLs.
 - Validate JSON-driven UI; never execute arbitrary user HTML/JS/CSS.
-- Enforce Supabase RLS and server-side ownership checks.
-- Draft != published != live; failed builds preserve last live deployment.
-- MVP uses Next.js SSG and Vercel; do not introduce Astro, CloudFront or dedicated workers without approval.
+- Enforce Supabase RLS and server-side ownership (later company role) checks.
+- Our database objects live in schema `linktree` (helpers in `linktree_private`), never in `public`: Eosoft's shared project already uses `public.profiles`, `sites`, `site_members`, and more.
+- Draft != published != live; a failed publish keeps the last live version.
+- Public pages render on demand and are cached per page (`'use cache'` + `cacheTag`, refreshed with `updateTag`); no full-site rebuilds. Do not introduce Astro, CloudFront, GrapesJS or dedicated workers without approval.
 - Never fabricate completed tests, deployments or subagent execution.
 
 ## Start orchestration

@@ -9,9 +9,10 @@
 | `ARCHITECTURE.md`       | System design, publishing and caching                                                     |
 | `data-model.md`         | Supabase tables, functions and RLS                                                        |
 | `API_Contract.md`       | Routes, payloads, errors and the page config contract                                     |
-| `plan.md`               | Original (v1) roadmap                                                                     |
+| `plan.md`               | Roadmap of record (v2): goal, decisions, sprints, journeys, definition of done            |
 | `sprint-plan-v2.md`     | v2 plan reconciled with the built code: Keep/Change/New/Drop, Sprints 5–9, open questions |
 | `template-authoring.md` | How to turn an approved design into a template                                            |
+| `eosoft-audit.md`       | Questions and answers about Eosoft auth, schema and domains (V2-02)                       |
 
 Agent routing and rules: `AGENTS.md` / `CLAUDE.md` at the repository root and `.claude/`.
 

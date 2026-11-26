@@ -2,39 +2,43 @@
 
 ## Project status
 
-**State:** Early implementation. Auth and dashboard UI exist; dashboard runs on mock data. No migrations or deployed database yet.
+**State (2026-11-26):** v1 is built and merged: auth, dashboard on real data, editor, renderer, on-demand publishing at `/{username}/{slug}` with a real 404, analytics, and CI with E2E on local Supabase. The plan of record is now v2 (`plan.md`, `sprint-plan-v2.md`). Sprint 5 is in progress; database and SSO work waits for the open questions Q1–Q12.
 
 ## Vision
 
-A multi-tenant link-in-bio builder: select a predefined template, customize blocks/design, publish a static landing page with a unique user-scoped URL, and monitor clicks/views.
+An Eosoft Linktree: companies build Linktree pages from templates, publish them at a system-wide `/{slug}` with a catalog, link them from Eosoft Social Pages, and see views and clicks.
 
-## Finalized decisions
+## Decisions
 
-- Next.js App Router + TypeScript + Tailwind CSS v4 + shadcn/ui.
-- Supabase Auth/PostgreSQL/Storage with RLS.
-- JSONB page versions, Zod schema validation, shared renderer.
-- URL `/{username}/{pageSlug}`; template key is not the unique public page identifier.
-- Next.js static prerendering on Vercel; publish triggers deployment; hourly cron as fallback.
-- No Astro, AWS CloudFront, custom worker, arbitrary HTML/CSS/JS or custom domain in MVP.
+- Next.js App Router + TypeScript + Tailwind CSS v4 + shadcn/ui; Supabase (Postgres, Auth, Storage) with RLS; Vercel.
+- JSONB page versions, Zod validation, one shared renderer for preview and public pages; content is separate from templates, so switching template keeps it.
+- No user HTML/JS/CSS and no GrapesJS; developers convert approved designs (`template-authoring.md`).
+- On-demand rendering with per-page cache tags; no full-site rebuilds; no Astro, CloudFront or build workers.
+- v2 (approved 2026-11-26): system-wide `/{slug}` with suggested, editable slugs; `pages` stays the Linktree table, with members added beside it.
 
 ## Core success criterion
 
-User `son` and user `tien` both select `tech-review`, save different configs, and publish `linkbio.example/son/tech-review` and `linkbio.example/tien/tech-review` with no cross-tenant data leakage.
+Two companies publish two different Linktrees from the same template at `/{slug}` addresses, edit them independently, and neither can see or change the other's drafts or data.
 
-## Scope
+## Key risks / open decisions
 
-**Included:** Auth, template gallery, pages, visual editor, drafts, preview, publish, static public pages, basic analytics, deployment status.
-**Deferred:** custom domains, fine-grained freeform HTML/CSS, advanced ranking, distributed incremental publishing, full marketing automation.
-
-## Key risks / unresolved decisions
-
-Deployment trigger and ready-callback implementation; hosting hostname; analytics privacy/consent; template font catalog; build duration at scale.
+See the open questions (SSO provider, shared Supabase ownership, slug rules, roles, catalog source, stale window, analytics) and risks in `sprint-plan-v2.md` and `plan.md`.
 
 ## Working agreement
 
 Update this file after each completed task: date, task ID, changed files, verification performed, known limitations, and next task. Never mark a task complete solely because code was written.
 
 ## Change log
+
+- 2026-11-26: Approved option A (schema `linktree`) and the role matrix. V2-10b is written: migration `20261126090000_linktree_schema.sql` moves our tables and functions out of `public`/`private` (re-creating function bodies with `linktree.` names, renaming the sign-up trigger), and the app's Supabase clients use `DB_SCHEMA`. Verified: RLS suite with 5 new isolation checks on local Postgres, 48 Vitest tests, lint and typecheck. Not yet: CI with real Supabase and E2E, and Staging (needs the schema exposed in the Dashboard first). The storage bucket rename is a separate task (V2-10c).
+
+- 2026-11-26: V2-13a done. `src/lib/slug.ts` suggests a global slug from a title (Vietnamese accents removed, 3–30 chars, reserved names avoided, random 4-character suffix when needed); 6 tests; 48 tests total pass; lint and typecheck clean.
+
+- 2026-11-26: Eosoft audit answers recorded (`eosoft-audit.md`). Eosoft's `public` schema already has `profiles`, `sites`, `site_members`, `site_versions`, `slug_redirects`, `site_traffic`, `builds`. Our current project is Staging/Demo; production will be Eosoft's project (Supabase Auth + Google). Tenant = company, five roles. Proposal in `data-model.md`: move our tables into schema `linktree` to avoid collisions, company membership, and a role matrix. All of this awaits approval. V2-23 deferred (Q5). `TASKS.md` sub-tasks updated.
+
+- 2026-11-26: Sprint 5 audit and measurement. V2-02a: `docs/eosoft-audit.md` questionnaire for Hoàng (Q1–Q5, schema-only exports, no secrets), not sent yet. V2-04a: `scripts/cache-check.mjs <baseUrl> <path> [--steps publish,rename,redeploy]` (GET only) records status, `x-vercel-cache`, age, region, latency and a visible-text content hash. Verified locally: 404 for unknown paths, stable warm hash, failing exit code for a missing page. The interactive steps are not run yet.
+
+- 2026-11-26: v2 is the plan of record. `docs/plan.md` now holds the v2 roadmap (v1 kept in git history); `AGENTS.md` invariants and the agent prompts (`architect`, `orchestrator`, `publisher`, `.claude/agents/AGENTS.md`) point to v2 (`/{slug}` target, on-demand rendering, no GrapesJS). `TASKS.md` adds day-sized v2 sub-tasks with owners, files, checks and status; startable now: V2-02a, V2-04a, V2-13a.
 
 - 2026-11-26: Sprint 5 started on `feat/v2-sprint-5`. V2-06: font size, spacing and content-width steps in Design, applied by `BioPage` through the design-token variables (5 new tests, snapshots unchanged, screenshots checked). V2-07: `docs/template-authoring.md`; the starter tests now read every migration. Approved: `pages` keeps its name. Checks: lint, typecheck, 42 tests, build.
 

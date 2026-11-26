@@ -63,11 +63,11 @@ Each page must have:
 - Configuration
 - Publication status
 
-Public URLs follow:
+Public URLs follow (v2, approved 2026-11-26; migration in Sprint 6):
 
-`/{username}/{pageSlug}`
+`/{slug}`, `/{slug}/{category}`, `/{slug}/{category}/{subcategory}`
 
-The same page slug may exist for different users.
+Slugs are unique system-wide. The current code still serves `/{username}/{pageSlug}`; old URLs must redirect after the migration.
 
 ### JSON Schema
 

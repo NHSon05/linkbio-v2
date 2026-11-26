@@ -85,7 +85,14 @@ Code deploys rebuild the app; publishing does not. Public pages are cached per p
 
 Arbitrary user HTML/JS, custom domains, multi-region workers, advanced visual drag-and-drop canvas, full real-time ranking, complex n8n orchestration.
 
-## 11. Open decisions
+## 11. v2 direction (2026-11-26)
+
+- Environments: our Supabase project `link-bio-tree` is Staging/Demo; production will be Eosoft's Supabase project (Supabase Auth + Google, the same as today).
+- Our tables must not collide with Eosoft's `public` tables (`profiles`, `sites`, `site_members`, …). Approved: ours live in schema `linktree` (helpers in `linktree_private`); see `data-model.md` → "v2: Eosoft coexistence".
+- Tenant = company, one company per user, roles `super_admin`/`owner`/`admin`/`editor`/`viewer` (proposed matrix in `data-model.md`).
+- Writers: this app only, for now; external invalidation (V2-23) deferred.
+
+## 12. Open decisions
 
 - Public hostname and whether dashboard shares the same domain.
 - Deployment trigger mechanism and deployment-ready verification provider.

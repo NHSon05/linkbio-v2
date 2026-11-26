@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { cacheLife, cacheTag } from "next/cache";
-import { supabaseEnv } from "@/lib/auth";
+import { DB_SCHEMA, supabaseEnv } from "@/lib/auth";
 import { siteFromConfig, type Site } from "@/lib/schemas/site";
 
 /** Cache tag of one public page; publish/rename/delete call updateTag() with it. */
@@ -30,6 +30,7 @@ export async function getPublishedPage(
 
   const { url, key } = supabaseEnv();
   const supabase = createClient(url, key, {
+    db: { schema: DB_SCHEMA },
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data, error } = await supabase

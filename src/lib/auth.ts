@@ -5,6 +5,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection, NextResponse } from "next/server";
 
+/** V2-10b: our tables and functions live in schema `linktree`, apart from Eosoft's `public` (data-model.md). */
+export const DB_SCHEMA = "linktree";
+
 export function getSupabaseEnv() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
@@ -32,6 +35,7 @@ export async function createSessionClient() {
   const store = await cookies();
   const { url, key } = supabaseEnv();
   return createServerClient(url, key, {
+    db: { schema: DB_SCHEMA },
     cookies: {
       getAll: () => store.getAll(),
       setAll(cookiesToSet) {

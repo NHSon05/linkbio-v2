@@ -22,7 +22,7 @@ Before implementing tasks, read:
 1. ARCHITECTURE.md
 2. data-model.md
 3. API_Contract.md
-4. plan.md
+4. plan.md (v2) and sprint-plan-v2.md
 5. TASKS.md
 6. project_summary.md
 
@@ -88,7 +88,7 @@ After completing a verified task:
 - Use Next.js App Router.
 - Use Supabase as the backend.
 - Use shared schema-driven rendering.
-- Use Next.js SSG for public landing pages.
+- Render public landing pages on demand with per-page cache tags (no full-site rebuilds).
 - Use Vercel for hosting.
 - Do not introduce Astro or AWS CloudFront in MVP.
 

@@ -199,7 +199,9 @@ declare
   v_current bigint;
   v_template_id uuid;
 begin
-  if jsonb_typeof(p_config) is distinct from 'object' or p_config -> 'schemaVersion' is distinct from '1'::jsonb then
+  -- Editors can call this directly, past the app's Zod check; cap the size so one draft cannot bloat the company.
+  if jsonb_typeof(p_config) is distinct from 'object' or p_config -> 'schemaVersion' is distinct from '1'::jsonb
+     or octet_length(p_config::text) > 524288 then
     raise exception 'INVALID_CONFIG' using errcode = 'PT400';
   end if;
   select id into v_template_id from linktree.templates where key = p_config ->> 'template' and is_active;

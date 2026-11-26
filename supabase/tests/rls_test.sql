@@ -137,6 +137,8 @@ select tests.as_user(:'user_e');
 select tests.ok((select revision from linktree.save_draft(:'page_a', 1, '{"schemaVersion":1,"template":"shop-grid","profile":{"title":"A"}}')) = 2, 'editor saves a draft');
 select tests.throws(format($$select linktree.save_draft(%L, 1, '{"schemaVersion":1,"template":"classic"}')$$, :'page_a'), 'PT409', 'stale revision rejected');
 select tests.throws(format($$select linktree.save_draft(%L, 2, '{"schemaVersion":2,"template":"classic"}')$$, :'page_a'), 'PT400', 'wrong schemaVersion rejected');
+select tests.throws(format($$select linktree.save_draft(%L, 2, jsonb_build_object('schemaVersion', 1, 'template', 'classic', 'x', repeat('a', 600000)))$$, :'page_a'),
+  'PT400', 'oversized config rejected');
 select tests.ok((select t.key from linktree.pages p join linktree.templates t on t.id = p.template_id where p.id = :'page_a') = 'shop-grid', 'template follows saved config');
 select tests.throws(format($$update linktree.pages set live_version_id = draft_version_id where id = %L$$, :'page_a'), '42501', 'client cannot set live version');
 select tests.throws(format($$insert into linktree.page_versions (page_id, revision, schema_version, config) values (%L, 9, 1, '{"schemaVersion":1}')$$, :'page_a'), '42501', 'client cannot insert versions directly');

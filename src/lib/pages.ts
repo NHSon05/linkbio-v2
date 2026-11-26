@@ -66,20 +66,38 @@ export async function listPageDrafts(): Promise<PageDraft[]> {
     const version = byId.get(page.draft_version_id);
     if (!version) return [];
     const live = page.live_version_id && byId.get(page.live_version_id);
+    const liveSite = live && parseOrNull(live.config, page.slug);
     return [
       {
         id: page.id,
         revision: Number(version.revision),
-        site: siteFromConfig(version.config, page.slug),
-        live: live
-          ? {
-              revision: Number(live.revision),
-              site: siteFromConfig(live.config, page.slug),
-            }
-          : null,
+        // A draft saved past the app's checks (direct RPC call) must not lock the company out of the dashboard.
+        site:
+          parseOrNull(version.config, page.slug) ??
+          liveSite ??
+          siteFromConfig(BROKEN_DRAFT, page.slug),
+        live:
+          live && liveSite
+            ? { revision: Number(live.revision), site: liveSite }
+            : null,
       },
     ];
   });
+}
+
+const BROKEN_DRAFT = {
+  schemaVersion: 1,
+  template: "classic",
+  profile: { title: "Bản nháp lỗi, lưu lại để sửa" },
+};
+
+function parseOrNull(config: unknown, slug: string): Site | null {
+  try {
+    return siteFromConfig(config, slug);
+  } catch (err) {
+    console.error("Stored page config is invalid", slug, err);
+    return null;
+  }
 }
 
 export const TRAFFIC_DAYS = 30;

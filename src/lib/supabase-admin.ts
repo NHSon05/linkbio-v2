@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
-import { getSupabaseEnv } from "@/lib/auth";
+import { DB_SCHEMA, getSupabaseEnv } from "@/lib/auth";
 
 /**
  * Secret-key client for trusted server jobs only (AN-01 event ingestion). Never use it for user
@@ -13,6 +13,7 @@ export function createAdminClient() {
     process.env.SUPABASE_SECRET_KEY || process.env.NEXT_SUPABASE_SECRET_KEY;
   if (!env || !secret) return null;
   return createClient(env.url, secret, {
+    db: { schema: DB_SCHEMA },
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

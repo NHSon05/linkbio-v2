@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { getSupabaseEnv } from "@/lib/auth";
+import { DB_SCHEMA, getSupabaseEnv } from "@/lib/auth";
 import { RESERVED_USERNAMES } from "@/lib/schemas/username";
 
 const USERNAME = /^[a-z0-9][a-z0-9-]{2,29}$/;
@@ -35,6 +35,7 @@ export async function publicPageExists(
   const env = getSupabaseEnv();
   if (!env) return true;
   const supabase = createClient(env.url, env.key, {
+    db: { schema: DB_SCHEMA },
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data, error } = await supabase

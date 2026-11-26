@@ -101,7 +101,7 @@ Implemented as the `publishPage(pageId, expectedRevision)` server action over `p
 
 ```json
 {
-  "path": "/son/tech-review",
+  "path": "/tech-review",
   "type": "click",
   "blockId": "b-link-1",
   "referrerHost": "facebook.com",
@@ -130,11 +130,30 @@ Source of truth: `src/lib/schemas/site.ts` (D-01). Stored shape is `PageConfigSc
 - `catalog?: {products: Product[], collections: {id, name, items: productId[]}[]}`
 - `nav?`, `source?: {platform, pageId}`
 
-Template manifests decide which block types each region accepts. Values are constrained by Zod; no arbitrary CSS/HTML and only `http(s)` product URLs. `pageId`, `ownerId`, `slug` stay outside the stored config as database metadata; the dashboard adds `slug` (`username/pageSlug`) when it reads a page (`SiteSchema`).
+Template manifests decide which block types each region accepts. Values are constrained by Zod; no arbitrary CSS/HTML and only `http(s)` product URLs. `pageId`, `ownerId`, `slug` stay outside the stored config as database metadata; the dashboard adds `slug` (the global slug, since V2-12b) when it reads a page (`SiteSchema`).
 
 ## Internal publishing protocol
 
-On-demand (2026-11-25). `publish_page` sets `desired_version_id` and `live_version_id` to the reviewed immutable version in one locked transaction, then the app calls `updateTag("published:{username}/{slug}")`. Public reads use `get_published_page(username, slug)` (anon), which returns the live `config`, or `redirect_to` for an old path. A live page takes precedence over a redirect. The `deployments` table is unused for now.
+On-demand (2026-11-25). `publish_page` sets `desired_version_id` and `live_version_id` to the reviewed immutable version in one locked transaction. The `deployments` table is unused for now.
+
+Since V2-12/V2-14 (2026-11-26), pages live at `/{slug}`:
+
+- **Public reads:** `get_published_page(p_path)` (anon) returns `(page_id, config, redirect_to)`.
+  - `/{slug}` of a live page returns `config`.
+  - An old address returns `redirect_to = '/{slug}'`. Old addresses are `/{oldslug}` after a rename, or `/{username}/{slug}` from before V2-12b.
+  - A live page wins over a redirect.
+- **Proxy responses:** 308 for a redirect, 404 for anything else.
+- **Cache tags:** every cached lookup carries `path:{path}`, plus `page:{page_id}` when the lookup found a page.
+  - publish: `updateTag(page:{id})` and `updateTag(path:/{slug})`
+  - rename: `updateTag(page:{id})` and `updateTag(path:/{new})`
+  - delete: `updateTag(page:{id})`
+- **Writes and roles:**
+
+  | RPC                                                         | Role                               | Errors                                                                                                   |
+  | ----------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+  | `create_page`, `publish_page`, `rename_page`, `delete_page` | admin+                             | 403 `FORBIDDEN` (role too low), 404 `PAGE_NOT_FOUND` (another company's page), 409 `SLUG_TAKEN` (global) |
+  | `save_draft`                                                | editor+                            | same codes                                                                                               |
+  | `slug_available(slug)`                                      | signed in, rate-limited by the app | none; returns `available`, `invalid`, `reserved` or `taken`                                              |
 
 ## Contract tests
 

@@ -127,12 +127,12 @@ const RegionLayoutSchema = z.object({
 
 export const SiteSchema = z.object({
   schemaVersion: z.literal(SCHEMA_VERSION).default(SCHEMA_VERSION),
-  // Đường dẫn công khai "tên-người-dùng/tên-trang" (AD-13).
+  // V2-12b: global public address /{slug} (same rule as pages.slug_format and GLOBAL_SLUG).
   slug: z
     .string()
     .regex(
-      /^[a-z0-9][a-z0-9-]*\/[a-z0-9-]+$/,
-      "slug có dạng tên-người-dùng/tên-trang (a-z, 0-9, -)",
+      /^[a-z0-9][a-z0-9-]{2,29}$/,
+      "slug dùng 3–30 ký tự a-z, 0-9 hoặc -, bắt đầu bằng chữ hoặc số",
     ),
   source: z.object({ platform: z.string(), pageId: z.string() }).optional(),
   template: z.string().default("classic"),
@@ -168,16 +168,9 @@ export const PageConfigSchema = SiteSchema.omit({
 });
 export type PageConfig = z.infer<typeof PageConfigSchema>;
 
-/** Rebuilds the editor's Site from a stored config plus the page's public path. */
-export function siteFromConfig(
-  config: unknown,
-  username: string,
-  pageSlug: string,
-): Site {
-  return SiteSchema.parse({
-    ...(config as object),
-    slug: `${username}/${pageSlug}`,
-  });
+/** Rebuilds the editor's Site from a stored config plus the page's slug (public path /{slug}). */
+export function siteFromConfig(config: unknown, slug: string): Site {
+  return SiteSchema.parse({ ...(config as object), slug });
 }
 
 /** What the dashboard shows for a page in lists, the slug switcher and search. */

@@ -17,15 +17,15 @@ const stored = {
 };
 
 describe("page config schema v1", () => {
-  it("rebuilds a Site from stored config + username/slug", () => {
-    const site = siteFromConfig(stored, "son", "tech-review");
-    expect(site.slug).toBe("son/tech-review");
+  it("rebuilds a Site from stored config + global slug", () => {
+    const site = siteFromConfig(stored, "tech-review");
+    expect(site.slug).toBe("tech-review");
     expect(site.schemaVersion).toBe(1);
     expect(site.blocks).toEqual([]);
   });
 
   it("strips slug and updatedAt for storage", () => {
-    const site = siteFromConfig(stored, "son", "tech-review");
+    const site = siteFromConfig(stored, "tech-review");
     const config = PageConfigSchema.parse({ ...site, updatedAt: "2026-11-24" });
     expect(config).not.toHaveProperty("slug");
     expect(config).not.toHaveProperty("updatedAt");
@@ -33,25 +33,24 @@ describe("page config schema v1", () => {
 
   it("defaults a missing schemaVersion to 1 and rejects other versions", () => {
     expect(
-      SiteSchema.parse({ ...stored, schemaVersion: undefined, slug: "a/b" })
+      SiteSchema.parse({ ...stored, schemaVersion: undefined, slug: "abc" })
         .schemaVersion,
     ).toBe(1);
     expect(
-      SiteSchema.safeParse({ ...stored, schemaVersion: 2, slug: "a/b" })
+      SiteSchema.safeParse({ ...stored, schemaVersion: 2, slug: "abc" })
         .success,
     ).toBe(false);
   });
 
-  it("rejects a slug without username", () => {
-    expect(
-      SiteSchema.safeParse({ ...stored, slug: "tech-review" }).success,
-    ).toBe(false);
+  it("rejects old username/slug paths and slugs outside 3–30 chars", () => {
+    for (const slug of ["son/tech-review", "ab", "x".repeat(31), "Tech"])
+      expect(SiteSchema.safeParse({ ...stored, slug }).success).toBe(false);
   });
 
   it("summarises unpublished pages without a public slug", () => {
-    const site = siteFromConfig(stored, "son", "tech-review");
+    const site = siteFromConfig(stored, "tech-review");
     expect(summaryOf(site).publishedSlug).toBeNull();
-    expect(summaryOf(site, true).publishedSlug).toBe("son/tech-review");
+    expect(summaryOf(site, true).publishedSlug).toBe("tech-review");
   });
 
   it("starts every template with valid sample content", () => {
@@ -100,7 +99,7 @@ describe("theme and template switching (V2-06)", () => {
       { width: "100vw" },
     ])
       expect(
-        SiteSchema.safeParse({ ...stored, slug: "a/b", theme }).success,
+        SiteSchema.safeParse({ ...stored, slug: "abc", theme }).success,
       ).toBe(false);
   });
 
@@ -114,13 +113,11 @@ describe("theme and template switching (V2-06)", () => {
         ],
         layout: { main: { blocks: ["l"] } },
       },
-      "son",
       "tech-review",
     );
     for (const template of Object.keys(templates)) {
       const switched = siteFromConfig(
         PageConfigSchema.parse({ ...site, template }),
-        "son",
         "tech-review",
       );
       expect(switched.template).toBe(template);

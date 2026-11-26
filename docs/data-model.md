@@ -80,17 +80,21 @@ erDiagram
 
 ## RLS policy matrix
 
-| Entity          | Anonymous                        | Authenticated owner       | Service/build role          |
-| --------------- | -------------------------------- | ------------------------- | --------------------------- |
-| profiles        | read public profile fields only  | update own                | controlled                  |
-| templates       | read active                      | read active               | admin write                 |
-| pages           | no draft reads                   | CRUD own                  | read published build inputs |
-| page_versions   | no drafts                        | read/write own drafts     | read desired snapshots      |
-| products/assets | only intentionally public assets | CRUD own                  | controlled                  |
-| deployments     | none                             | read own status           | write verified status       |
-| page_events     | no raw reads/writes              | aggregated analytics only | controlled ingestion        |
+Since V2-11 (2026-11-26) access follows the company, not the page creator. "Member" = any role in the page's company.
 
-Use `auth.uid() = owner_id` (or joins to pages for child rows), `WITH CHECK` for inserts/updates, and test negative cross-tenant access. Anonymous public page data should be exposed through carefully scoped server/build queries, not open draft RLS policies.
+| Entity                                 | Anonymous                                 | Company member                                                    | Service role        |
+| -------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------- | ------------------- |
+| profiles                               | read claimed profiles (public fields)     | update own                                                        | controlled          |
+| templates                              | read active                               | read active                                                       | admin write         |
+| companies, members                     | none                                      | read own company and own membership row; no writes                | controlled          |
+| pages                                  | none (public reads via RPC)               | read company pages; create/publish/rename/delete via RPC (admin+) | controlled          |
+| page_versions                          | none                                      | read company drafts; save via `save_draft` (editor+)              | controlled          |
+| media_assets, `linktree-media` objects | public URL only                           | read company media; upload into `<company_id>/` (editor+)         | controlled          |
+| products, page_products                | none                                      | CRUD own (still per user, V2-11e)                                 | controlled          |
+| deployments, redirects                 | none (redirects via `get_published_page`) | read for company pages                                            | write               |
+| page_events                            | none                                      | daily aggregates via `page_traffic` (company)                     | `record_page_event` |
+
+Policies join `company_members` on `user_id = auth.uid()`. RPCs check the role with `linktree_private.page_for(page, min_role)`: another company's page answers 404, a role that is too low 403. `supabase/tests/rls_test.sql` tests every row of this table and the role matrix.
 
 ## Migration sequence
 
@@ -156,7 +160,7 @@ Q4: the tenant is the company; one user belongs to exactly one company.
 - `linktree.company_members (company_id, user_id unique, role)`: `unique (user_id)` enforces one company per user. `role` is one of `super_admin`, `owner`, `admin`, `editor`, `viewer`.
 - `pages.company_id` (not null after backfill). `owner_id` stays as "created by" for audit only. Each existing user becomes `owner` of their own company during the backfill.
 
-### Proposed role matrix (needs confirmation)
+### Role matrix (approved 2026-11-26)
 
 | Action                                            | viewer | editor | admin | owner | super_admin |
 | ------------------------------------------------- | ------ | ------ | ----- | ----- | ----------- |
@@ -167,6 +171,26 @@ Q4: the tenant is the company; one user belongs to exactly one company.
 | Grant `super_admin`                               |        |        |       |       | ✓           |
 
 All checks stay inside one company. Cross-company access for Eosoft staff is **not** proposed: it would weaken tenant isolation, and it needs its own decision if required.
+
+### Implemented in Sprint 6 (2026-11-26, local and CI; not yet on Staging)
+
+- `20261126100000_companies.sql` (V2-11a–c):
+  - `companies`, `company_members`, `pages.company_id`, with a backfill making each user `owner` of a company of their own.
+  - `pages.owner_id` is now nullable with `on delete set null`, so pages outlive their creator. The `page_versions` immutability trigger therefore covers only the snapshot columns, which lets `created_by` be set to null.
+  - RPCs follow the matrix, plus a new `delete_page`. Clients lose direct `delete` on pages.
+  - Staging only: sign-up creates a personal company.
+  - Not done: member management (owner/super_admin rows of the matrix, V2-11e); products are still per user.
+- `20261126110000_media_bucket.sql` (V2-10c):
+  - Bucket `linktree-media`, with objects under `<company_id>/` and writes by editor+. `media_assets.company_id` added.
+  - The old `media` bucket and its policies are removed. On Staging it was empty, so nothing moved.
+  - The migration refuses to run if the old bucket or `media_assets` has data.
+- `20261126120000_global_slug.sql` (V2-12b/c, V2-13b):
+  - `pages.slug` is unique system-wide, 3–30 chars, and not in `linktree_private.reserved_names()`, which `src/lib/reserved.test.ts` keeps in sync with `RESERVED_USERNAMES` and the app's top-level routes.
+  - Duplicates and invalid slugs get `-xxxx`; the oldest page keeps the name.
+  - Every live page's `/{username}/{slug}` becomes a redirect to `/{slug}`, and older redirects point straight to the final address.
+  - A slug another company's redirect still uses counts as taken, so its old links can't be captured.
+  - New: `slug_available`. Changed: `get_published_page(p_path)` and `record_page_event(p_slug, ...)`.
+  - Read-only pre-check: `supabase/reports/slug_collisions.sql`.
 
 ### `social_pages` link
 

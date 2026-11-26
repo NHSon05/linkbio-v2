@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { AUTH_LINK_HEADERS, getSupabaseEnv, GOOGLE_CALLBACK_PATH } from "@/lib/auth";
-import { publicPageExists, publicPagePath } from "@/lib/publishing/exists";
+import { lookupPublicPage, publicPagePath } from "@/lib/publishing/exists";
 import { EMAIL_CONFIRM_PATH, EMAIL_VERIFY_PATH } from "@/lib/emailConfirmation";
 
 const publicAuthPages = new Set(["/login", "/register", "/register/resend", "/forgot-password"]);
@@ -16,9 +16,11 @@ export async function proxy(request: NextRequest) {
   // Anonymous tracking beacons never use the session; skip the auth check for them.
   if (pathname === "/api/v1/events") return NextResponse.next();
   // Missing public pages must answer 404 here: the page itself streams, which fixes the status at 200.
-  const publicPage = publicPagePath(pathname);
-  if (publicPage && !(await publicPageExists(publicPage.username, publicPage.slug)))
-    return NextResponse.rewrite(new URL("/_not-found", request.url), { status: 404 });
+  // Old addresses (/{username}/{slug}, renamed slugs) move permanently with a 308 that keeps the query.
+  const publicPath = publicPagePath(pathname);
+  const found = publicPath && (await lookupPublicPage(publicPath));
+  if (publicPath && !found) return NextResponse.rewrite(new URL("/_not-found", request.url), { status: 404 });
+  if (found && found !== "page") return NextResponse.redirect(new URL(found.redirectTo + search, request.url), 308);
 
   const env = getSupabaseEnv();
   if (!env) return NextResponse.next();
@@ -43,7 +45,7 @@ export async function proxy(request: NextRequest) {
   // API routes answer 401 themselves instead of redirecting.
   if (pathname.startsWith("/api/")) return response;
 
-  // Dashboard (/) cần đăng nhập; trang công khai /{username}/{slug} giữ nguyên.
+  // Dashboard (/) cần đăng nhập; trang công khai /{slug} giữ nguyên.
   if (!signedIn && (pathname === "/" || pathname.startsWith("/dashboard")) && !publicAuthPages.has(pathname)) {
     const target = new URL("/login", request.url);
     if (pathname !== "/") target.searchParams.set("next", pathname + search);

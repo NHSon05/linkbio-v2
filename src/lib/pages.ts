@@ -11,16 +11,35 @@ export type PageDraft = {
   live: { revision: number; site: Site } | null;
 };
 
-/** FE-02: the caller's pages with their latest drafts (RLS also limits rows to the owner). */
-export async function listPageDrafts(
+/** V2-11a role matrix, low to high (data-model.md). */
+const ROLES = ["viewer", "editor", "admin", "owner", "super_admin"] as const;
+export type Role = (typeof ROLES)[number];
+
+/** Unknown roles rank below viewer, so they get nothing. */
+export const atLeast = (role: string, min: Role) =>
+  ROLES.indexOf(role as Role) >= ROLES.indexOf(min);
+
+/** V2-11d: the caller's company and role, read on the server (RLS returns only their own row). */
+export async function getMembership(
   userId: string,
-  username: string,
-): Promise<PageDraft[]> {
+): Promise<{ companyId: string; role: Role }> {
+  const supabase = await createSessionClient();
+  const { data, error } = await supabase
+    .from("company_members")
+    .select("company_id, role")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error("Không đọc được công ty: " + error.message);
+  if (!data) throw new Error("Tài khoản chưa thuộc công ty nào.");
+  return { companyId: data.company_id as string, role: data.role as Role };
+}
+
+/** FE-02/V2-11d: every page of the caller's company with its latest draft (RLS limits rows to the company). */
+export async function listPageDrafts(): Promise<PageDraft[]> {
   const supabase = await createSessionClient();
   const { data: pages, error } = await supabase
     .from("pages")
     .select("id, slug, draft_version_id, live_version_id")
-    .eq("owner_id", userId)
     .order("updated_at", { ascending: false });
   if (error)
     throw new Error("Không đọc được danh sách trang: " + error.message);
@@ -47,20 +66,38 @@ export async function listPageDrafts(
     const version = byId.get(page.draft_version_id);
     if (!version) return [];
     const live = page.live_version_id && byId.get(page.live_version_id);
+    const liveSite = live && parseOrNull(live.config, page.slug);
     return [
       {
         id: page.id,
         revision: Number(version.revision),
-        site: siteFromConfig(version.config, username, page.slug),
-        live: live
-          ? {
-              revision: Number(live.revision),
-              site: siteFromConfig(live.config, username, page.slug),
-            }
-          : null,
+        // A draft saved past the app's checks (direct RPC call) must not lock the company out of the dashboard.
+        site:
+          parseOrNull(version.config, page.slug) ??
+          liveSite ??
+          siteFromConfig(BROKEN_DRAFT, page.slug),
+        live:
+          live && liveSite
+            ? { revision: Number(live.revision), site: liveSite }
+            : null,
       },
     ];
   });
+}
+
+const BROKEN_DRAFT = {
+  schemaVersion: 1,
+  template: "classic",
+  profile: { title: "Bản nháp lỗi, lưu lại để sửa" },
+};
+
+function parseOrNull(config: unknown, slug: string): Site | null {
+  try {
+    return siteFromConfig(config, slug);
+  } catch (err) {
+    console.error("Stored page config is invalid", slug, err);
+    return null;
+  }
 }
 
 export const TRAFFIC_DAYS = 30;

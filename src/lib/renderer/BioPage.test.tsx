@@ -6,7 +6,7 @@ import { BioPage, FONT_SIZES, themeScaleVars } from "./BioPage";
 
 const render = (config: object) =>
   renderToStaticMarkup(
-    <BioPage site={siteFromConfig(config, "son", "test")} />,
+    <BioPage site={siteFromConfig(config, "test")} />,
   );
 
 const page = (blocks: Block[], extra: object = {}) =>

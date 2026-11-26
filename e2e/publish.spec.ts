@@ -1,92 +1,70 @@
 import { expect, test } from "@playwright/test";
 import {
   createUser,
+  expectPublicHeading,
+  fetchOnce,
   profileName,
   publish,
   save,
+  signUp,
   signUpAndCreatePage,
+  slugStatus,
+  createPage,
+  uid,
   visit,
   visitAndTrack,
 } from "./helpers";
 
-// QA-01: login → create → edit → publish; two users with the same slug get separate pages.
-test("two users publish the same slug independently", async ({ browser }) => {
+// QA-01 / V2-15b: login → onboarding → create (suggested slug) → edit → save → publish at /{slug}.
+test("owner creates, saves and publishes a page at /{slug}", async ({
+  browser,
+}) => {
   const son = await createUser("son");
-  const tien = await createUser("tien");
-  const sonPath = `/${son.username}/tech-review`;
-  const tienPath = `/${tien.username}/tech-review`;
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await signUp(page, son);
+  // The create form is pre-filled with a free slug suggested from the username.
+  await expect(page.getByLabel("Slug", { exact: true })).toHaveValue(
+    son.username,
+  );
+  const slug = await createPage(page);
+  const path = `/${slug}`;
 
-  // Son: create, edit, save; the draft survives a reload.
-  const sonCtx = await browser.newContext();
-  const sonPage = await sonCtx.newPage();
-  await signUpAndCreatePage(sonPage, son, "tech-review");
   await expect(
-    sonPage.getByText("Chào mừng bạn ghé trang của mình").first(),
+    page.getByText("Chào mừng bạn ghé trang của mình").first(),
   ).toBeVisible(); // starter content
-  await profileName(sonPage).fill("Son Review");
-  await save(sonPage);
-  await sonPage.reload();
-  await expect(profileName(sonPage)).toHaveValue("Son Review");
+  await profileName(page).fill("Son Review");
+  await save(page);
+  await page.reload();
+  await expect(profileName(page)).toHaveValue("Son Review");
 
   // Not published yet: visitors get the not-found page.
-  let anon = await visit(browser, sonPath);
+  const anon = await visit(browser, path);
   expect(anon.response?.status()).toBe(404);
   await expect(
     anon.visitor.getByText("This page could not be found."),
   ).toBeVisible();
   await anon.close();
 
-  // Publish: visitors see it.
-  await publish(sonPage);
-  await expect(sonPage.getByText("Đã xuất bản", { exact: true })).toBeVisible();
-  anon = await visit(browser, sonPath);
-  expect(anon.response?.status()).toBe(200);
-  await expect(
-    anon.visitor.getByRole("heading", { level: 1, name: "Son Review" }),
-  ).toBeVisible();
-  await anon.close();
+  await publish(page);
+  await expect(page.getByText("Đã xuất bản", { exact: true })).toBeVisible();
+  await expectPublicHeading(browser, path, "Son Review");
 
   // A saved but unpublished edit stays private until the next publish.
-  await profileName(sonPage).fill("Son Review v2");
-  await save(sonPage);
-  anon = await visit(browser, sonPath);
-  await expect(
-    anon.visitor.getByRole("heading", { level: 1, name: "Son Review" }),
-  ).toBeVisible();
-  await anon.close();
-  await publish(sonPage);
-  anon = await visit(browser, sonPath);
-  await expect(
-    anon.visitor.getByRole("heading", { level: 1, name: "Son Review v2" }),
-  ).toBeVisible();
-  await anon.close();
+  await profileName(page).fill("Son Review v2");
+  await save(page);
+  await expectPublicHeading(browser, path, "Son Review");
+  await publish(page);
+  await expectPublicHeading(browser, path, "Son Review v2");
 
-  // Tien: same slug, own page. "Xuất bản" saves unsaved edits first.
-  const tienCtx = await browser.newContext();
-  const tienPage = await tienCtx.newPage();
-  await signUpAndCreatePage(tienPage, tien, "tech-review");
-  await profileName(tienPage).fill("Tien Page");
-  await publish(tienPage);
-
-  anon = await visit(browser, tienPath);
-  await expect(
-    anon.visitor.getByRole("heading", { level: 1, name: "Tien Page" }),
-  ).toBeVisible();
-  await anon.close();
-  anon = await visit(browser, sonPath);
-  await expect(
-    anon.visitor.getByRole("heading", { level: 1, name: "Son Review v2" }),
-  ).toBeVisible();
-  await anon.close();
-
-  // AN-01/AN-02: a regular visit is recorded and shows up as a view on Son's Home tab.
-  expect(await visitAndTrack(browser, sonPath)).toBe(202);
+  // AN-01/AN-02: a regular visit is recorded and shows up as a view on the Home tab.
+  expect(await visitAndTrack(browser, path)).toBe(202);
   await expect
     .poll(
       async () => {
-        await sonPage.goto("/?tab=home");
+        await page.goto(`/?tab=home&slug=${slug}`);
         return Number(
-          await sonPage
+          await page
             .locator('[data-slot="card"]')
             .filter({ hasText: "Lượt xem" })
             .locator("strong")
@@ -98,18 +76,61 @@ test("two users publish the same slug independently", async ({ browser }) => {
     )
     .toBeGreaterThan(0);
 
+  await ctx.close();
+});
+
+// V2-13a/b: slugs are unique system-wide; a taken slug offers a free suggestion.
+test("second user typing a taken slug applies the suggestion", async ({
+  browser,
+}) => {
+  const son = await createUser("son");
+  const tien = await createUser("tien");
+  const taken = `tech-${uid()}`;
+
+  const sonCtx = await browser.newContext();
+  const sonPage = await sonCtx.newPage();
+  await signUpAndCreatePage(sonPage, son, taken);
+  await profileName(sonPage).fill("Son Page");
+  await publish(sonPage);
+
+  const tienCtx = await browser.newContext();
+  const tienPage = await tienCtx.newPage();
+  await signUp(tienPage, tien);
+  const field = tienPage.getByLabel("Slug", { exact: true });
+  await field.fill(taken);
+  await expect(slugStatus(tienPage)).toContainText("Slug này đã được dùng.");
+  await expect(slugStatus(tienPage)).toContainText("Gợi ý:");
+  await expect(
+    tienPage.getByRole("button", { name: "Tạo trang", exact: true }),
+  ).toBeDisabled();
+
+  const apply = slugStatus(tienPage).getByRole("button", { name: /^Dùng / });
+  const suggestion = (await apply.innerText()).replace(/^Dùng\s+/, "").trim();
+  expect(suggestion).toMatch(/^[a-z0-9][a-z0-9-]{2,29}$/);
+  expect(suggestion).not.toBe(taken);
+  await apply.click();
+  await expect(field).toHaveValue(suggestion);
+  expect(await createPage(tienPage)).toBe(suggestion);
+  // "Xuất bản" saves unsaved edits first.
+  await profileName(tienPage).fill("Tien Page");
+  await publish(tienPage);
+
+  await expectPublicHeading(browser, `/${taken}`, "Son Page");
+  await expectPublicHeading(browser, `/${suggestion}`, "Tien Page");
+
   await sonCtx.close();
   await tienCtx.close();
 });
 
-test("unknown public paths answer 404", async ({ browser }) => {
-  const { visitor, response, close } = await visit(
-    browser,
-    "/nobody-e2e/missing",
-  );
-  expect(response?.status()).toBe(404);
-  await expect(
-    visitor.getByText("This page could not be found."),
-  ).toBeVisible();
-  await close();
+// V2-14c: unknown public-shaped paths answer 404, with one or two segments.
+test("unknown public paths answer 404", async ({ browser, request }) => {
+  for (const path of ["/zz-nope-e2e", "/nobody-e2e/missing"]) {
+    expect((await fetchOnce(request, path)).status(), path).toBe(404);
+    const { visitor, response, close } = await visit(browser, path);
+    expect(response?.status(), path).toBe(404);
+    await expect(
+      visitor.getByText("This page could not be found."),
+    ).toBeVisible();
+    await close();
+  }
 });

@@ -114,3 +114,60 @@ Use `auth.uid() = owner_id` (or joins to pages for child rows), `WITH CHECK` for
 - 2026-11-25: Analytics. `record_page_event(username, slug, type, block_id, referrer_host, utm_source)` is security definer and executable only by `service_role`. The events route calls it with the server-only secret key. It records events only for live pages and returns false otherwise. `page_traffic(days)` is security definer for `authenticated` and returns the caller's own daily views and clicks, grouped by Asia/Ho_Chi_Minh day, for at most 90 days. Both are covered by `supabase/tests/rls_test.sql`.
 
 - 2026-11-26 (V2-06): `PageConfig.theme` gains optional `fontSize` (`sm`/`md`/`lg`), `spacing` (`compact`/`normal`/`relaxed`) and `width` (`narrow`/`normal`/`wide`). Missing means the template default, so existing configs are unchanged and no migration is needed. Other values fail `PageConfigSchema`, so `saveDraft` rejects them.
+
+## v2: Eosoft coexistence (proposal, 2026-11-26)
+
+Source: `eosoft-audit.md`. Option A and the role matrix were approved on 2026-11-26. The schema move (V2-10b) is written and tested locally, but not yet applied to Staging. Merging into Eosoft's project waits for Eosoft's column-level DDL.
+
+**V2-10b (`20261126090000_linktree_schema.sql`):**
+
+- All 10 tables move to `linktree`, with their data, RLS, indexes, triggers and grants.
+- The 7 API functions move to `linktree`, and the 5 trigger helpers to `linktree_private` (no client access). Schema `private` is dropped.
+- The sign-up trigger is renamed `linktree_on_auth_user_created`.
+- `linktree` gets Supabase-style default privileges, so later tables behave like `public`.
+- App clients set `db.schema = "linktree"` (`DB_SCHEMA` in `src/lib/auth.ts`).
+- The Data API must expose `linktree`: `supabase/config.toml` locally; the Dashboard (Data API, Exposed schemas) on Staging.
+- Not moved yet: storage bucket `media` and its `storage.objects` policies (V2-10c).
+
+### Environments
+
+| Project                | Role                                                                                          | Tables                                                                                                                             |
+| ---------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `link-bio-tree` (ours) | **Staging/Demo** from 2026-11-26; Google sign-in; all migrations applied (dry run up to date) | ours, in `public` today                                                                                                            |
+| Eosoft's Supabase      | Future production                                                                             | Eosoft's `public`: `sites`, `profiles`, `site_admins`, `site_members`, `site_versions`, `slug_redirects`, `site_traffic`, `builds` |
+
+### Name isolation: dedicated schema `linktree` (recommended)
+
+Our `public.profiles` has the same name as Eosoft's, and several of our tables duplicate Eosoft's (`pages`↔`sites`, `page_versions`↔`site_versions`, `url_redirects`↔`slug_redirects`, `page_events`↔`site_traffic`, `deployments`↔`builds`). Options:
+
+| Option                                 | How                                                                                                                          | For                                                                               | Against                                                                                                                 |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **A. Schema `linktree`** (recommended) | `alter table public.x set schema linktree` on Staging; new tables created there; functions re-created with `linktree.` names | No renames; one place to grant, audit or drop; Eosoft's `public` is never touched | The schema must be added to the Data API's exposed schemas; every Supabase client call names it (`.schema("linktree")`) |
+| B. Prefix `lt_` in `public`            | Rename every table (`lt_profiles`, `lt_pages`, …)                                                                            | No Data API setting                                                               | Renames touch every migration, function, policy and query; still shares `public` with Eosoft                            |
+| C. Map onto Eosoft's tables            | Use `sites`, `site_members`, … directly                                                                                      | No duplicate data                                                                 | Needs column-level DDL first; Eosoft's semantics (e.g. `profiles` holding drafts) may not match ours                    |
+
+Working plan: A on Staging now (Sprint 6, V2-10b), and decide per table between keeping it in `linktree` and moving to C once the DDL is known.
+
+### Tenancy: company, not page owner
+
+Q4: the tenant is the company; one user belongs to exactly one company.
+
+- `linktree.companies (id uuid pk, name)`: Staging placeholder until Eosoft's company table is known.
+- `linktree.company_members (company_id, user_id unique, role)`: `unique (user_id)` enforces one company per user. `role` is one of `super_admin`, `owner`, `admin`, `editor`, `viewer`.
+- `pages.company_id` (not null after backfill). `owner_id` stays as "created by" for audit only. Each existing user becomes `owner` of their own company during the backfill.
+
+### Proposed role matrix (needs confirmation)
+
+| Action                                            | viewer | editor | admin | owner | super_admin |
+| ------------------------------------------------- | ------ | ------ | ----- | ----- | ----------- |
+| See the company's Linktrees, drafts and analytics | ✓      | ✓      | ✓     | ✓     | ✓           |
+| Edit and save drafts, upload images               |        | ✓      | ✓     | ✓     | ✓           |
+| Create, publish, rename, delete Linktrees         |        |        | ✓     | ✓     | ✓           |
+| Manage members and roles (not `super_admin`)      |        |        |       | ✓     | ✓           |
+| Grant `super_admin`                               |        |        |       |       | ✓           |
+
+All checks stay inside one company. Cross-company access for Eosoft staff is **not** proposed: it would weaken tenant isolation, and it needs its own decision if required.
+
+### `social_pages` link
+
+Staging placeholder: `linktree.social_pages (id uuid pk, company_id, name, linktree_id uuid references pages (id) on delete set null)`. Once Eosoft's DDL is confirmed, the real `social_pages` gets the same `linktree_id` column, and the placeholder is dropped.

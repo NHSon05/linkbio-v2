@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { suggestSlug } from "@/lib/slug";
 import Editor from "@/components/dashboard/editor";
 import {
   dashboardOrigin,
@@ -7,7 +8,12 @@ import {
   getUsername,
   requireUser,
 } from "@/lib/auth";
-import { listPageDrafts, listPageTraffic } from "@/lib/pages";
+import {
+  atLeast,
+  getMembership,
+  listPageDrafts,
+  listPageTraffic,
+} from "@/lib/pages";
 
 export default function Page() {
   return (
@@ -24,12 +30,13 @@ async function Dashboard() {
     );
   }
   const user = await requireUser();
-  // ON-01: a username is needed before any page (/{username}/{slug}) can exist.
+  // ON-01: onboarding (claiming a username) still comes before the dashboard.
   const username = await getUsername(user.id);
   if (!username) redirect("/onboarding");
-  const [pages, traffic] = await Promise.all([
-    listPageDrafts(user.id, username),
+  const [pages, traffic, { role }] = await Promise.all([
+    listPageDrafts(),
     listPageTraffic(),
+    getMembership(user.id),
   ]);
   return (
     // Remount when pages are created, renamed or deleted so local drafts reset.
@@ -39,6 +46,13 @@ async function Dashboard() {
       landingUrl={dashboardOrigin()}
       pages={pages}
       traffic={traffic}
+      // V2-11d: only hides controls; every action and RPC checks the role again.
+      can={{ edit: atLeast(role, "editor"), manage: atLeast(role, "admin") }}
+      suggestedSlug={suggestSlug(
+        String(
+          user.user_metadata?.full_name || user.user_metadata?.name || username,
+        ),
+      )}
     />
   );
 }

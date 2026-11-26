@@ -28,6 +28,7 @@ import {
 import { PageSettings } from "@/components/dashboard/workspace/page-settings";
 import { Profile } from "@/components/dashboard/workspace/profile";
 import { SocialLinks } from "@/components/dashboard/workspace/social-links";
+import { UploadAllowed } from "@/components/dashboard/workspace/image-field";
 
 // Same window as listPageTraffic() (TRAFFIC_DAYS, server-only module).
 const TRAFFIC_WINDOW = 30;
@@ -49,12 +50,18 @@ export default function Editor({
   landingUrl,
   pages,
   traffic,
+  can,
+  suggestedSlug,
 }: {
   email: string;
   landingUrl: string;
   pages: PageDraft[];
   /** Per page id; null when analytics could not be loaded. */
   traffic: Record<string, TrafficDay[]> | null;
+  /** V2-11d: edit = editor+ (save drafts, upload), manage = admin+ (create, publish, rename, delete). */
+  can: { edit: boolean; manage: boolean };
+  /** V2-13b: pre-filled slug for the create form. */
+  suggestedSlug: string;
 }) {
   const params = useSearchParams();
   const view = sections.find((s) => s.id === params.get("tab"))?.id ?? "home";
@@ -71,6 +78,8 @@ export default function Editor({
     bySlug(pages, (p) => p.live),
   );
   const [saving, setSaving] = useState(false);
+  // Viewers look but cannot change the draft.
+  const locked = saving || !can.edit;
   const meta = bySlug(pages, (p) => p);
   const sites = pages.map((page) =>
     summaryOf(drafts[page.site.slug], !!live[page.site.slug]),
@@ -88,7 +97,7 @@ export default function Editor({
   );
 
   const update: UpdateDraft = (fn) => {
-    if (!slug || saving) return;
+    if (!slug || locked) return;
     setDrafts((prev) => {
       const next = structuredClone(prev[slug]);
       fn(next);
@@ -150,13 +159,19 @@ export default function Editor({
     >
       {!slug || !draft ? (
         <div className="grid max-w-3xl gap-5">
-          <h1 className="workspace-title">Tạo trang đầu tiên</h1>
-          <Panel
-            title="Chọn mẫu và slug"
-            hint="Trang sẽ có địa chỉ /{username}/{slug}."
-          >
-            <CreatePage />
-          </Panel>
+          <h1 className="workspace-title">
+            {can.manage ? "Tạo trang đầu tiên" : "Chưa có trang nào"}
+          </h1>
+          {can.manage ? (
+            <Panel title="Chọn mẫu và slug" hint="Trang sẽ có địa chỉ /{slug}.">
+              <CreatePage suggestedSlug={suggestedSlug} />
+            </Panel>
+          ) : (
+            <Panel
+              title="Công ty chưa có trang"
+              hint="Quản trị viên công ty sẽ tạo trang; trang mới hiện ở đây."
+            />
+          )}
         </div>
       ) : view === "home" ? (
         <HomeOverview
@@ -165,6 +180,9 @@ export default function Editor({
           sites={sites}
           drafts={drafts}
           landingUrl={landingUrl}
+          createPage={
+            can.manage ? <CreatePage suggestedSlug={suggestedSlug} /> : null
+          }
           traffic={
             traffic
               ? (traffic[meta[slug].id] ?? fillDays([], TRAFFIC_WINDOW))
@@ -210,39 +228,48 @@ export default function Editor({
                   <ProductManager
                     site={draft}
                     update={update}
-                    locked={saving}
+                    locked={locked}
                     landingUrl={landingUrl}
                   />
                 ) : (
-                  <fieldset
-                    disabled={saving}
-                    className="grid min-w-0 gap-4"
-                    aria-label="Nội dung trang"
-                  >
-                    {view === "bio" && (
-                      <>
-                        <SocialLinks
-                          site={draft}
-                          update={update}
-                          locked={saving}
-                        />
-                        <Profile draft={draft} update={update} />
-                        <BlockEditor draft={draft} update={update} />
-                      </>
-                    )}
-                    {view === "slug" && (
-                      <>
-                        <PageSettings
-                          key={slug}
-                          pageId={meta[slug!].id}
-                          path={slug!}
-                          published={!!live[slug!]}
-                          dirty={anyDirty}
-                        />
-                        <Design draft={draft} update={update} locked={saving} />
-                      </>
-                    )}
-                  </fieldset>
+                  // Viewers: no upload buttons (uploadImage() checks the role too).
+                  <UploadAllowed value={can.edit}>
+                    <fieldset
+                      disabled={locked}
+                      className="grid min-w-0 gap-4"
+                      aria-label="Nội dung trang"
+                    >
+                      {view === "bio" && (
+                        <>
+                          <SocialLinks
+                            site={draft}
+                            update={update}
+                            locked={locked}
+                          />
+                          <Profile draft={draft} update={update} />
+                          <BlockEditor draft={draft} update={update} />
+                        </>
+                      )}
+                      {view === "slug" && (
+                        <>
+                          {can.manage && (
+                            <PageSettings
+                              key={slug}
+                              pageId={meta[slug!].id}
+                              slug={slug!}
+                              published={!!live[slug!]}
+                              dirty={anyDirty}
+                            />
+                          )}
+                          <Design
+                            draft={draft}
+                            update={update}
+                            locked={locked}
+                          />
+                        </>
+                      )}
+                    </fieldset>
+                  </UploadAllowed>
                 )}
                 <div className="min-w-0 xl:sticky xl:top-20">
                   <SitePreview site={draft} landingUrl={landingUrl} />
@@ -259,7 +286,12 @@ export default function Editor({
                         : "Đã lưu · chưa xuất bản"}
                 </StatusPill>
                 <div className="ml-auto flex flex-wrap gap-1.5">
-                  {dirty && (
+                  {!can.edit && (
+                    <span className="self-center text-sm text-muted-foreground">
+                      Bạn chỉ có quyền xem.
+                    </span>
+                  )}
+                  {dirty && can.edit && (
                     <Button
                       variant="ghost"
                       title="Bỏ thay đổi"
@@ -267,22 +299,29 @@ export default function Editor({
                       size="icon"
                       disabled={saving}
                       onClick={() =>
-                        setDrafts((prev) => ({ ...prev, [slug]: saved[slug] }))
+                        setDrafts((prev) => ({
+                          ...prev,
+                          [slug]: saved[slug],
+                        }))
                       }
                     >
                       <Undo2 />
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    disabled={!dirty || saving}
-                    onClick={save}
-                  >
-                    {saving ? "Đang lưu…" : "Lưu nháp"}
-                  </Button>
-                  <Button disabled={upToDate || saving} onClick={publish}>
-                    {saving ? "Đang xử lý…" : "Xuất bản"}
-                  </Button>
+                  {can.edit && (
+                    <Button
+                      variant="outline"
+                      disabled={!dirty || saving}
+                      onClick={save}
+                    >
+                      {saving ? "Đang lưu…" : "Lưu nháp"}
+                    </Button>
+                  )}
+                  {can.manage && (
+                    <Button disabled={upToDate || saving} onClick={publish}>
+                      {saving ? "Đang xử lý…" : "Xuất bản"}
+                    </Button>
+                  )}
                 </div>
               </footer>
             </>

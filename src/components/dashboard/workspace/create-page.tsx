@@ -7,15 +7,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SlugHint, slugBlocked, useSlugCheck } from "./slug-check";
 import { TemplatePicker } from "./template-picker";
 
-/** FE-03: pick a template and slug, then create_page() and open the new page. */
-export function CreatePage() {
+/** FE-03/V2-13b: pick a template and slug (pre-filled and checked as you type), then create_page(). */
+export function CreatePage({ suggestedSlug }: { suggestedSlug: string }) {
   const [state, action, pending] = useActionState<CreatePageState, FormData>(
     createPage,
     {},
   );
   const [template, setTemplate] = useState(state.template || "classic");
+  const [slug, setSlug] = useState(state.slug ?? suggestedSlug);
+  const live = useSlugCheck(slug);
+  // After a 409 the database's answer wins until the user changes the slug.
+  const check =
+    state.suggestion && slug === state.slug
+      ? { status: "taken" as const, suggestion: state.suggestion }
+      : live;
+  const error =
+    slug === state.slug && !state.suggestion ? state.error : undefined;
 
   return (
     <form action={action} className="grid gap-4">
@@ -30,21 +40,25 @@ export function CreatePage() {
             placeholder="tech-review"
             autoCapitalize="none"
             spellCheck={false}
-            defaultValue={state.slug}
-            aria-invalid={!!state.error || undefined}
-            aria-describedby={state.error ? "new-page-error" : undefined}
-            maxLength={63}
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            aria-invalid={!!error || slugBlocked(check) || undefined}
+            aria-describedby={
+              "new-page-slug-status" + (error ? " new-page-error" : "")
+            }
+            maxLength={30}
             required
           />
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending || slugBlocked(check)}>
             <Plus />
             {pending ? "Đang tạo…" : "Tạo trang"}
           </Button>
         </div>
+        <SlugHint id="new-page-slug-status" check={check} apply={setSlug} />
       </div>
-      {state.error && (
+      {error && (
         <Alert id="new-page-error" variant="destructive">
-          <AlertDescription>{state.error}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
     </form>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useTransition } from "react";
+import { createContext, use, useRef, useTransition } from "react";
 import { LoaderCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { uploadImage } from "@/app/(dashboard)/actions";
@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MAX_IMAGE_BYTES } from "@/lib/media";
+
+/** V2-11d: false for viewers, so the upload button is hidden (uploadImage() checks the role again). */
+export const UploadAllowed = createContext(true);
 
 /** Ô đường dẫn ảnh kèm nút tải ảnh lên Storage (FE-05). */
 export function ImageField({
@@ -22,6 +25,7 @@ export function ImageField({
   onChange: (url: string) => void;
 }) {
   const file = useRef<HTMLInputElement>(null);
+  const canUpload = use(UploadAllowed);
   const [uploading, startUpload] = useTransition();
 
   function upload(picked: File) {
@@ -50,15 +54,17 @@ export function ImageField({
           placeholder="https://…"
           onChange={(e) => onChange(e.target.value)}
         />
-        <Button
-          type="button"
-          variant="outline"
-          disabled={uploading}
-          onClick={() => file.current?.click()}
-        >
-          {uploading ? <LoaderCircle className="animate-spin" /> : <Upload />}
-          {uploading ? "Đang tải…" : "Tải ảnh"}
-        </Button>
+        {canUpload && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={uploading}
+            onClick={() => file.current?.click()}
+          >
+            {uploading ? <LoaderCircle className="animate-spin" /> : <Upload />}
+            {uploading ? "Đang tải…" : "Tải ảnh"}
+          </Button>
+        )}
         <input
           ref={file}
           type="file"

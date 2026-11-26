@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowRight, Eye, MousePointer2, Percent, ShoppingBag, ChartNoAxesColumn } from "lucide-react";
 import { type Site } from "@/lib/schemas/site";
 import { catalogFor } from "@/templates/catalog";
@@ -10,7 +10,6 @@ import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/dashboard/segmented";
 import type { SiteSummary } from "@/lib/schemas/site";
 import type { TrafficDay } from "@/lib/analytics";
-import { CreatePage } from "./create-page";
 import { Panel } from "@/components/dashboard/panel";
 import { workspaceUrl } from "./navigation";
 import { SiteGallery } from "./site-gallery";
@@ -57,12 +56,15 @@ export function HomeOverview({
   sites,
   drafts,
   landingUrl,
+  createPage,
   traffic: rows,
 }: {
   site: Site;
   sites: SiteSummary[];
   drafts: Record<string, Site>;
   landingUrl: string;
+  /** The create form, or null when the role cannot create pages (V2-11d). */
+  createPage: ReactNode;
   /** AN-02: last 30 days from page_events; null when loading failed. */
   traffic: TrafficDay[] | null;
 }) {
@@ -189,9 +191,11 @@ export function HomeOverview({
         </Card>
       </div>
       <SiteGallery sites={sites} drafts={drafts} active={site} landingUrl={landingUrl} />
-      <Panel title="Tạo trang mới" hint="Mỗi trang có slug riêng: /{username}/{slug}.">
-        <CreatePage />
-      </Panel>
+      {createPage && (
+        <Panel title="Tạo trang mới" hint="Mỗi trang có slug riêng: /{slug}.">
+          {createPage}
+        </Panel>
+      )}
     </div>
   );
 }

@@ -62,6 +62,8 @@ Legend: **Keep** = already done and verified here. **Change** = exists but must 
 
 ## 3. Sprint breakdown
 
+Day-sized sub-tasks (V2-01a, V2-11b, …) with files, checks and status live in `docs/TASKS.md` → "v2 sub-tasks".
+
 One-week sprints, one developer, continuing from Sprints 1–4. Owner = responsible subagent (`.claude/agents/*`). **Gate** = cannot start until the listed question in §4 is answered.
 
 **Approved 2026-11-26:** `pages` keeps its name and becomes the Linktree table; membership is added beside it (V2-10).
@@ -119,7 +121,7 @@ Post-MVP: GA4 (only if Q11 says so), ranking automation (v2 7.3), and slicing an
 
 ## 4. Open questions (must be answered before database or SSO work)
 
-**For Hoàng (Eosoft):**
+**For Hoàng (Eosoft):** answered 2026-11-26 (Q5 is a working assumption). See `docs/eosoft-audit.md`; the resulting data proposal is in `docs/data-model.md` → "v2: Eosoft coexistence".
 
 1. Which SSO / identity provider does Eosoft use (Supabase Auth in the same project, OIDC, SAML, other), and what are the allowed callback URLs and domains for admin and public pages?
 2. Is "shared Supabase" literally Eosoft's existing project? If so, who owns migrations there, and may we add tables (`linktree_members`, outbox) and RLS policies?

@@ -16,19 +16,20 @@ Your responsibility is to convert published page configurations into publicly ac
 ## Architecture
 
 Supabase Published Config
-→ Next.js Static Generation
-→ Vercel Deployment
-→ CDN
+→ publish_page() makes the draft revision live
+→ updateTag() refreshes the page's cache tag
+→ next visit renders and caches the page (no rebuild)
 → Public URL
 
 ## Public URL Format
 
-/{username}/{pageSlug}
+v2 target (Sprint 6): /{slug}, plus /{slug}/{category}/{subcategory} for the catalog.
+Current code: /{username}/{pageSlug}; old URLs must redirect after the migration.
 
 Examples:
 
-/son/tech-review
-/tien/tech-review
+/tech-review
+/tech-review/laptops/macbook
 
 Each page must resolve to its own published configuration.
 

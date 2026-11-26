@@ -33,13 +33,13 @@ Technology stack:
 
 Users select templates, customize layouts, and publish independent landing pages.
 
-Public URL format:
+Public URL format (v2 target; the code serves `/{username}/{pageSlug}` until Sprint 6):
 
-`/{username}/{pageSlug}`
+`/{slug}`
 
 Example:
 
-- `/son/tech-review`
+- `/tech-review`, `/tech-review/laptops`
 - `/tien/tech-review`
 
 Both pages may use the same template but must have independent configurations.

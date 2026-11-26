@@ -30,6 +30,8 @@ Update this file after each completed task: date, task ID, changed files, verifi
 
 ## Change log
 
+- 2026-11-26: Staging is live at `https://linkbio-v2.vercel.app` on schema `linktree` (V2-10b DONE; live database checks and Data API verified). Cache check on Staging, read-only part: unknown path 404, published page 200 served from cache (HIT) with a stable content hash. Publish, rename and redeploy steps, the fixture seed script and Google sign-in on Staging are still open (V2-04a/b, V2-05b).
+
 - 2026-11-26: Approved option A (schema `linktree`) and the role matrix. V2-10b is written: migration `20261126090000_linktree_schema.sql` moves our tables and functions out of `public`/`private` (re-creating function bodies with `linktree.` names, renaming the sign-up trigger), and the app's Supabase clients use `DB_SCHEMA`. Verified: RLS suite with 5 new isolation checks on local Postgres, 48 Vitest tests, lint and typecheck. Not yet: CI with real Supabase and E2E, and Staging (needs the schema exposed in the Dashboard first). The storage bucket rename is a separate task (V2-10c).
 
 - 2026-11-26: V2-13a done. `src/lib/slug.ts` suggests a global slug from a title (Vietnamese accents removed, 3–30 chars, reserved names avoided, random 4-character suffix when needed); 6 tests; 48 tests total pass; lint and typecheck clean.

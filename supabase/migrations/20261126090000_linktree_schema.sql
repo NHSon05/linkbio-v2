@@ -37,8 +37,9 @@ alter function private.set_updated_at() set schema linktree_private;
 
 -- `private` held only our trigger helpers; fails (and rolls back) if anything else is in it.
 drop schema private;
--- The default name is likely taken by Eosoft's own sign-up trigger.
-alter trigger on_auth_user_created on auth.users rename to linktree_on_auth_user_created;
+-- The sign-up trigger on auth.users keeps its name here: only auth.users' owner (supabase_auth_admin) may
+-- rename or drop it. It now calls linktree_private.handle_new_user. When merging into Eosoft's project, create it
+-- as linktree_on_auth_user_created there, since Eosoft likely uses the default name (data-model.md, V2-10b).
 
 -- Bodies re-created with linktree.* table names (generated from pg_get_functiondef, then reviewed).
 CREATE OR REPLACE FUNCTION linktree.create_page(p_template_key text, p_slug text)

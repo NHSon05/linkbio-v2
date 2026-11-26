@@ -123,7 +123,7 @@ Source: `eosoft-audit.md`. Option A and the role matrix were approved on 2026-11
 
 - All 10 tables move to `linktree`, with their data, RLS, indexes, triggers and grants.
 - The 7 API functions move to `linktree`, and the 5 trigger helpers to `linktree_private` (no client access). Schema `private` is dropped.
-- The sign-up trigger is renamed `linktree_on_auth_user_created`.
+- The sign-up trigger on `auth.users` now calls `linktree_private.handle_new_user`. It keeps the name `on_auth_user_created` on Staging, because only the owner of `auth.users` (`supabase_auth_admin`) may rename it. Merging into Eosoft's project needs a baseline migration that creates it as `linktree_on_auth_user_created`, since Eosoft likely uses the default name.
 - `linktree` gets Supabase-style default privileges, so later tables behave like `public`.
 - App clients set `db.schema = "linktree"` (`DB_SCHEMA` in `src/lib/auth.ts`).
 - The Data API must expose `linktree`: `supabase/config.toml` locally; the Dashboard (Data API, Exposed schemas) on Staging.

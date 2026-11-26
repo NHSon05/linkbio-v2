@@ -4,9 +4,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 
 // AN-01: public, rate-limited event ingestion. No cookies or IP addresses are stored.
 const EventSchema = z.object({
-  path: z
-    .string()
-    .regex(/^\/[a-z0-9][a-z0-9-]{2,29}\/[a-z0-9][a-z0-9-]{0,62}$/),
+  path: z.string().regex(/^\/[a-z0-9][a-z0-9-]{2,29}$/),
   type: z.enum(["view", "click"]),
   blockId: z
     .string()
@@ -52,10 +50,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "unavailable" }, { status: 503 });
   }
   const { path, type, blockId, referrerHost, utmSource } = parsed.data;
-  const [, username, slug] = path.split("/");
   const { error } = await supabase.rpc("record_page_event", {
-    p_username: username,
-    p_slug: slug,
+    p_slug: path.slice(1),
     p_event_type: type,
     p_block_id: blockId ?? null,
     p_referrer_host: referrerHost?.toLowerCase() ?? null,

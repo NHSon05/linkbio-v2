@@ -107,12 +107,94 @@ export const ProductSchema = z.object({
   currency: z.string().optional(),
   visible: z.boolean().optional(),
 });
-export const ProductDbSchema = z.object({
-  products: z.array(ProductSchema),
-  collections: z.array(
-    z.object({ id: z.string(), name: z.string(), items: z.array(z.string()) }),
-  ),
+// ---------- Categories (V2-30b, Q8 approved 2026-11-27) ----------
+// Categories live in the page config, so drafts hold them and each published version freezes them.
+// Public routes: /{slug}/{category} and /{slug}/{category}/{subcategory}; at most 2 levels.
+export const CATEGORY_SLUG = /^[a-z0-9][a-z0-9-]{0,39}$/;
+const categoryFields = {
+  id: z.string().min(1).max(100),
+  slug: z
+    .string()
+    .regex(
+      CATEGORY_SLUG,
+      "Slug danh mục dùng 1–40 ký tự a-z, 0-9 hoặc -, bắt đầu bằng chữ hoặc số",
+    ),
+  name: z.string().trim().min(1).max(80),
+  /** Product ids assigned to this category (order = display order). */
+  items: z
+    .array(z.string())
+    .max(500, "Mỗi danh mục có tối đa 500 sản phẩm")
+    .default([]),
+};
+export const SubcategorySchema = z.object({
+  ...categoryFields,
+  // Depth is fixed at 2: a subcategory cannot have its own children.
+  children: z.never({ error: "Danh mục chỉ có tối đa 2 cấp" }).optional(),
 });
+export const CategorySchema = z.object({
+  ...categoryFields,
+  children: z
+    .array(SubcategorySchema)
+    .max(50, "Mỗi danh mục có tối đa 50 danh mục con")
+    .default([]),
+});
+export type Subcategory = z.infer<typeof SubcategorySchema>;
+export type Category = z.infer<typeof CategorySchema>;
+
+export const ProductDbSchema = z
+  .object({
+    products: z.array(ProductSchema),
+    collections: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        items: z.array(z.string()),
+      }),
+    ),
+    categories: z
+      .array(CategorySchema)
+      .max(50, "Tối đa 50 danh mục")
+      .default([]),
+  })
+  .superRefine((db, ctx) => {
+    const products = new Set(db.products.map((p) => p.id));
+    const ids = new Set<string>();
+    const check = (
+      list: { id: string; slug: string; items: string[] }[],
+      path: (string | number)[],
+    ) => {
+      const slugs = new Set<string>();
+      list.forEach((c, i) => {
+        if (slugs.has(c.slug))
+          ctx.addIssue({
+            code: "custom",
+            path: [...path, i, "slug"],
+            message: `Slug danh mục "${c.slug}" bị trùng`,
+          });
+        if (ids.has(c.id))
+          ctx.addIssue({
+            code: "custom",
+            path: [...path, i, "id"],
+            message: "Mã danh mục bị trùng",
+          });
+        slugs.add(c.slug);
+        ids.add(c.id);
+        c.items.forEach((item, j) => {
+          if (!products.has(item))
+            ctx.addIssue({
+              code: "custom",
+              path: [...path, i, "items", j],
+              message: "Danh mục chứa sản phẩm không tồn tại",
+            });
+        });
+      });
+    };
+    // Slugs are unique among siblings: top level per page, subcategories per parent.
+    check(db.categories, ["categories"]);
+    db.categories.forEach((c, i) =>
+      check(c.children, ["categories", i, "children"]),
+    );
+  });
 export type Product = z.infer<typeof ProductSchema>;
 export type ProductDb = z.infer<typeof ProductDbSchema>;
 

@@ -5,6 +5,7 @@ import { Copy, Link2, Eye, EyeOff, Pencil, Plus, ShoppingBag, Trash2 } from "luc
 import { layoutOf, ProductSchema, type Product, type Site } from "@/lib/schemas/site";
 import { catalogFor } from "@/templates/catalog";
 import { ImageField } from "./image-field";
+import { assignProduct, CategoryChecks, CategoryManager, removeProduct } from "./categories";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -111,19 +112,18 @@ export function ProductManager({
       setError("Nhập tên sản phẩm và đường dẫn HTTP hoặc HTTPS hợp lệ.");
       return;
     }
-    update((d) => attachProduct(d, parsed.data, field("collection")));
+    const categoryIds = form.getAll("categories").map(String);
+    update((d) => {
+      attachProduct(d, parsed.data, field("collection"));
+      assignProduct(d, parsed.data.id, categoryIds);
+    });
     if (modal.mode === "add") setLink("");
     close();
   }
   function remove() {
     if (!modal || locked) return;
     const id = modal.product.id;
-    update((d) => {
-      const catalog = structuredClone(catalogFor(d));
-      catalog.products = catalog.products.filter((p) => p.id !== id);
-      for (const collection of catalog.collections) collection.items = collection.items.filter((item) => item !== id);
-      d.catalog = catalog;
-    });
+    update((d) => removeProduct(d, id));
     close();
   }
   function startAdd(e: FormEvent<HTMLFormElement>) {
@@ -171,7 +171,7 @@ export function ProductManager({
           </form>
         </Panel>
       )}
-      <Panel title="Danh mục sản phẩm">
+      <Panel title="Danh sách sản phẩm">
         <div aria-label="Lọc theo bộ sưu tập" className="mb-3 flex flex-wrap gap-1.5">
           <Button
             variant={!collection ? "default" : "secondary"}
@@ -263,6 +263,7 @@ export function ProductManager({
           </p>
         )}
       </Panel>
+      <CategoryManager site={site} update={update} locked={locked} />
       <Dialog
         open={!!modal}
         onOpenChange={(v) => {
@@ -284,7 +285,7 @@ export function ProductManager({
                 </DialogTitle>
                 <DialogDescription>
                   {modal.mode === "delete"
-                    ? "Sản phẩm sẽ được gỡ khỏi các bộ sưu tập trong bản nháp."
+                    ? "Sản phẩm sẽ được gỡ khỏi các bộ sưu tập và danh mục trong bản nháp."
                     : modal.mode === "detail"
                       ? "Chi tiết sản phẩm affiliate"
                       : "Thông tin hiển thị trên trang bio của bạn."}
@@ -389,6 +390,7 @@ export function ProductManager({
                       </Select>
                     )}
                   </div>
+                  <CategoryChecks categories={catalog.categories} productId={modal.product.id} />
                   {error && (
                     <p role="alert" className="text-destructive">
                       {error}

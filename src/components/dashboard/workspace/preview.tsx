@@ -84,7 +84,15 @@ export function PreviewScreen({
   title?: string;
 }) {
   const content = site ? (
-    <BioPage site={site} />
+    // Category links point at the live page; following them here would leave the editor and drop the draft.
+    <div
+      className="contents"
+      onClickCapture={(e) => {
+        if ((e.target as Element).closest('a[href^="/"]:not([target])')) e.preventDefault();
+      }}
+    >
+      <BioPage site={site} />
+    </div>
   ) : (
     <p
       role="status"

@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { siteFromConfig, type Block } from "@/lib/schemas/site";
+import { siteFromConfig, type Block, type Site } from "@/lib/schemas/site";
+import { findCategory, type CategoryMatch } from "@/templates/catalog";
 import { BioPage, FONT_SIZES, themeScaleVars } from "./BioPage";
 
 const render = (config: object) =>
@@ -146,5 +147,151 @@ describe("theme scale (V2-06)", () => {
     const css = readFileSync("src/styles/tokens.css", "utf8");
     for (const [step, rem] of Object.entries(FONT_SIZES))
       expect(css).toMatch(new RegExp(`--font-size-${step}: ${rem}rem;`));
+  });
+});
+
+describe("catalog categories (V2-31a)", () => {
+  const XSS = "<img src=x onerror=alert(1)>";
+  const shop = (products: object[], categories: object[]) =>
+    siteFromConfig(
+      {
+        schemaVersion: 1,
+        template: "classic",
+        profile: { title: "Son Shop", socials: [] },
+        blocks: [],
+        catalog: { products, collections: [], categories },
+      },
+      "son-shop",
+    );
+  const site = shop(
+    [
+      {
+        id: "p1",
+        title: "Son kem",
+        url: "https://shopee.vn/p1",
+        affiliateUrl: "https://s.shopee.vn/aff1",
+        image: "https://cf.shopee.vn/p1.jpg",
+      },
+      { id: "p2", title: "Son thỏi", url: "https://shopee.vn/p2" },
+      {
+        id: "p3",
+        title: "Hidden product",
+        url: "https://shopee.vn/p3",
+        visible: false,
+      },
+    ],
+    [
+      {
+        id: "c1",
+        slug: "lam-dep",
+        name: "Làm đẹp",
+        items: ["p1", "p3"],
+        children: [{ id: "s1", slug: "son", name: "Son môi", items: ["p2"] }],
+      },
+      { id: "c2", slug: "trong", name: "Trống", items: [] },
+    ],
+  );
+  const view = (s: Site, category: string, sub?: string) =>
+    findCategory(s, category, sub) ?? undefined;
+  const html = (s: Site, v?: CategoryMatch) =>
+    renderToStaticMarkup(<BioPage site={s} view={v} />);
+
+  it("links the root page to each top-level category", () => {
+    const root = html(site);
+    expect(root).toContain('<nav aria-label="Danh mục"');
+    expect(root).toContain('href="/son-shop/lam-dep"');
+    expect(root).toContain('href="/son-shop/trong"');
+    expect(root).not.toContain("/son-shop/lam-dep/son");
+    expect(root).toMatchSnapshot();
+  });
+
+  it("renders a category with breadcrumbs, subcategories and its products", () => {
+    const out = html(site, view(site, "lam-dep"));
+    expect(out).toContain('<nav aria-label="Breadcrumb">');
+    expect(out).toMatch(/<a [^>]*href="\/son-shop"[^>]*>Son Shop<\/a>/);
+    expect(out).toContain(
+      '<a aria-current="page" class="font-semibold" href="/son-shop/lam-dep">Làm đẹp</a>',
+    );
+    expect(out).toContain("Làm đẹp</h1>");
+    expect(out).toContain('href="/son-shop/lam-dep/son"');
+    // Own items first, then the subcategory's; the affiliate link wins over the store URL.
+    expect(out.indexOf("Son kem")).toBeLessThan(out.indexOf("Son thỏi"));
+    expect(out).toContain(
+      'href="https://s.shopee.vn/aff1" data-block-id="p1" target="_blank" rel="noopener noreferrer nofollow"',
+    );
+    expect(out).toContain('src="https://cf.shopee.vn/p1.jpg"');
+    expect(out).not.toContain("Hidden product");
+    expect(out).toMatchSnapshot();
+  });
+
+  it("renders a subcategory with the full breadcrumb trail", () => {
+    const out = html(site, view(site, "lam-dep", "son"));
+    const crumbs = [...out.matchAll(/<a ([^>]*)>([^<]*)<\/a>/g)].filter(
+      ([, attrs]) => !attrs.includes("target="),
+    );
+    expect(
+      crumbs
+        .slice(-3)
+        .map(([, attrs, text]) => [
+          attrs.match(/href="([^"]*)"/)?.[1],
+          attrs.includes('aria-current="page"'),
+          text,
+        ]),
+    ).toEqual([
+      ["/son-shop", false, "Son Shop"],
+      ["/son-shop/lam-dep", false, "Làm đẹp"],
+      ["/son-shop/lam-dep/son", true, "Son môi"],
+    ]);
+    expect(out).toContain("Son môi</h1>");
+    expect(out).not.toContain('aria-label="Danh mục con"');
+    expect(out).toContain("Son thỏi");
+    expect(out).not.toContain("Son kem");
+    expect(out).toMatchSnapshot();
+  });
+
+  it("shows an empty state for a category without products", () => {
+    expect(html(site, view(site, "trong"))).toContain("Chưa có sản phẩm");
+  });
+
+  it("escapes category and product names", () => {
+    const evil = shop(
+      [{ id: "p1", title: XSS, url: "https://shopee.vn/p1" }],
+      [
+        {
+          id: "c1",
+          slug: "x",
+          name: XSS,
+          items: ["p1"],
+          children: [{ id: "s1", slug: "y", name: XSS, items: ["p1"] }],
+        },
+      ],
+    );
+    for (const out of [
+      html(evil),
+      html(evil, view(evil, "x")),
+      html(evil, view(evil, "x", "y")),
+    ]) {
+      expect(out).not.toContain("<img src=x");
+      expect(out).toContain("&lt;img src=x onerror=alert(1)&gt;");
+    }
+  });
+
+  it("drops unsafe product images and links, even when the schema was bypassed", () => {
+    const unsafe = shop(
+      [
+        {
+          id: "p1",
+          title: "Bad",
+          url: "https://shopee.vn/p1",
+          image: "javascript:alert(1)",
+        },
+      ],
+      [{ id: "c1", slug: "x", name: "X", items: ["p1"] }],
+    );
+    unsafe.catalog!.products[0].affiliateUrl = "javascript:alert(1)";
+    const out = html(unsafe, view(unsafe, "x"));
+    expect(out).not.toMatch(/javascript:/i);
+    expect(out).not.toContain("<img");
+    expect(out).toContain("Bad");
   });
 });

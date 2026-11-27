@@ -7,6 +7,11 @@ Merges the Eosoft Linktree v2 proposal (`docs/v2-proposal/plan-v2.md`) with what
 1. **Routing:** move to a system-wide `/{slug}`, plus `/{slug}/{category}/{subcategory}` for the catalog. Creating a page suggests a slug (random suffix if taken); the user can change it later. Reserved names (`RESERVED_USERNAMES`, extended with every top-level app route) are rejected.
 2. **Templates:** keep the current model, where content (JSON blocks) is separate from templates and themes. Users switch templates without losing content and change styles and blocks; one shared renderer (`BioPage`) serves both the preview and public pages. No user HTML, JS or CSS. "Import HTML/CSS templates" in v2 therefore means _a developer converts an approved design into a template_ (React + design tokens) at development time, not a runtime import.
 3. **Audit first:** every v2 item is mapped to Keep / Change / New / Drop below before any migration.
+4. **Catalog (Q8, approved 2026-11-27):**
+   - **Source:** categories, subcategories and product assignments live in each Linktree's page config (`PageConfigSchema` → `catalog.categories`). They are saved with drafts and frozen in the published snapshot, like `catalog.products`. No live product data, and no tables.
+   - **Depth:** fixed at 2 levels, `/{slug}/{category}` and `/{slug}/{category}/{subcategory}`.
+   - **Product click:** opens the validated external affiliate URL directly; there is no product detail page.
+   - **Consequence:** publish already refreshes every catalog route through the page's cache tag, so catalog invalidation (V2-32) is not needed.
 
 ## 2. Keep / Change / New / Drop
 
@@ -37,9 +42,9 @@ Legend: **Keep** = already done and verified here. **Change** = exists but must 
 | 4.3   | Rename handling, old/new slug, cached 404                                     | Change   | `rename_page` + `url_redirects` + `updateTag` on old/new path                                                     | Old `/{username}/{slug}` → `/{slug}` redirects (V2-14); catalog paths (V2-32) |
 | 4.4   | Deployment cache verification                                                 | New      | Known risk: cache starts empty after a deploy (ARCHITECTURE §9)                                                   | V2-04                                                                         |
 | 4.5   | Remote cache test script                                                      | New      | —                                                                                                                 | V2-04                                                                         |
-| 5.1   | Category + product model                                                      | Change   | Products live in the page draft (`site.catalog`, FE-06); unused tables `products`/`page_products`                 | V2-30 (blocked on Q8)                                                         |
+| 5.1   | Category + product model                                                      | Change   | Products live in the page draft (`site.catalog`, FE-06); unused tables `products`/`page_products`                 | V2-30 (Q8: in the page config, depth 2)                                       |
 | 5.2   | Catalog routes + UI                                                           | New      | —                                                                                                                 | V2-31                                                                         |
-| 5.3   | Catalog invalidation                                                          | New      | —                                                                                                                 | V2-32 (only if the catalog is not part of the snapshot)                       |
+| 5.3   | Catalog invalidation                                                          | Drop     | —                                                                                                                 | Not needed (Q8: the catalog is part of the snapshot)                          |
 | 6.1   | E2E on a real preview server                                                  | Change   | E2E in CI against local Supabase (QA-01)                                                                          | Remote preview run (V2-40)                                                    |
 | 6.2   | Performance + security review                                                 | New      | Security rules followed per task; no full review                                                                  | V2-41                                                                         |
 | 6.3   | Demo + production smoke tests, rollback runbook                               | New      | —                                                                                                                 | V2-42 (absorbs PUB-03)                                                        |
@@ -56,7 +61,7 @@ Legend: **Keep** = already done and verified here. **Change** = exists but must 
 | Username onboarding (ON-01)                      | Change              | Username leaves the URL; keep it as a display handle or remove it with SSO (Q10) |
 | Deploy per publish + hourly cron (v1 plan P3/P5) | Drop                | Already replaced by on-demand publishing (2026-11-25)                            |
 | `deployments` table                              | Drop                | Unused by the app since on-demand publishing                                     |
-| `products` / `page_products` tables              | Drop or reuse       | Unused; decided by Q8                                                            |
+| `products` / `page_products` tables              | Drop                | Unused; Q8 keeps the catalog in the page config (drop in a later migration)      |
 | In-memory rate limit on `/api/v1/events`         | Change              | Per instance only; move to Vercel Firewall (V2-41)                               |
 | Email + Google login                             | Keep or drop        | Q10                                                                              |
 
@@ -100,13 +105,13 @@ One-week sprints, one developer, continuing from Sprints 1–4. Owner = responsi
 | V2-22 | frontend          | Deep link from Eosoft to `/admin/linktrees/{id}/edit` (maps to the editor by page id)                   | V2-20        | Authorized users land in the editor; others get 403/404; no tokens in URLs      |
 | V2-23 | publisher (cache) | Invalidation for writes outside this app: outbox table + signed `/api/revalidate` (idempotent, retried) | V2-14, Q5    | A write from a simulated Eosoft writer is visible within the agreed window (Q9) |
 
-### Sprint 8 — Catalog (gate: Q8)
+### Sprint 8 — Catalog (gate: Q8, approved 2026-11-27)
 
-| ID    | Owner               | Task                                                                                                                        | Depends on   | Acceptance                                                     |
-| ----- | ------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ | -------------------------------------------------------------- |
-| V2-30 | catalog + database  | Categories (Linktree-scoped, parent, max depth 2) and product links; source per Q8                                          | V2-11        | RLS tests; depth and scope constraints in SQL                  |
-| V2-31 | renderer + frontend | Routes `/{slug}/{category}` and `/{slug}/{category}/{subcategory}`; breadcrumbs; editor UI                                  | V2-30, V2-14 | E2E: deep link, reload, Back/Forward, 404 for unknown category |
-| V2-32 | publisher (cache)   | Catalog invalidation: if the catalog is part of the published snapshot, publish covers it; otherwise tag per category route | V2-31        | Remote script (V2-04) extended to catalog paths                |
+| ID    | Owner               | Task                                                                                       | Depends on   | Acceptance                                                     |
+| ----- | ------------------- | ------------------------------------------------------------------------------------------ | ------------ | -------------------------------------------------------------- |
+| V2-30 | catalog             | Categories (Linktree-scoped, max depth 2) and product links in the page config (Q8)        | V2-11        | Schema tests: depth, slugs, parent scope, product references   |
+| V2-31 | renderer + frontend | Routes `/{slug}/{category}` and `/{slug}/{category}/{subcategory}`; breadcrumbs; editor UI | V2-30, V2-14 | E2E: deep link, reload, Back/Forward, 404 for unknown category |
+| V2-32 | publisher (cache)   | DROPPED (Q8): the catalog is part of the published snapshot, so publish covers it          | —            | —                                                              |
 
 ### Sprint 9 — Release
 
@@ -133,7 +138,7 @@ Post-MVP: GA4 (only if Q11 says so), ranking automation (v2 7.3), and slicing an
 
 6. Global slug rules: allowed characters and length (reuse the username rule `^[a-z0-9][a-z0-9-]{2,29}$`?), and how long old `/{username}/{slug}` URLs keep redirecting.
 7. Member roles: which roles exist, and who may publish, rename and delete?
-8. Catalog source: products stored per Linktree in the published snapshot (current model, simplest caching) or live Eosoft product data? Is depth fixed at two levels, and is a product detail page needed?
+8. Catalog source: products stored per Linktree in the published snapshot (current model, simplest caching) or live Eosoft product data? Is depth fixed at two levels, and is a product detail page needed? **Answered 2026-11-27: in the page config and published snapshot; depth fixed at 2; no detail page, products open the affiliate URL (§1.4).**
 9. Acceptable delay between publish (or an Eosoft-side change) and the public page updating.
 10. After SSO: keep email/Google sign-in, and migrate existing accounts and pages, or start fresh?
 11. Analytics: keep the built-in events (already live) or also add GA4, and is a consent banner required?

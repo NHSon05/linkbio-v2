@@ -88,7 +88,10 @@ export async function lookupPublicPage(path: string): Promise<PublicLookup> {
   ]);
   const error = base.error ?? exact?.error;
   if (error) {
-    console.error("lookupPublicPage: get_published_page failed", error.code);
+    console.error(
+      "lookupPublicPage: get_published_page failed",
+      error.code || error.message,
+    );
     return "page";
   }
   if (exact?.data?.redirect_to) return target(exact.data.redirect_to, path, "");

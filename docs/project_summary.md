@@ -2,7 +2,10 @@
 
 ## Project status
 
-**State (2026-11-26):** v1 is built and merged: auth, dashboard on real data, editor, renderer, on-demand publishing at `/{username}/{slug}` with a real 404, analytics, and CI with E2E on local Supabase. The plan of record is now v2 (`plan.md`, `sprint-plan-v2.md`). Sprint 5 is in progress; database and SSO work waits for the open questions Q1–Q12.
+**State (2026-11-27):** v1 is built and merged. v2 (`plan.md`, `sprint-plan-v2.md`) is in progress.
+- Sprint 6 (company tenancy, global `/{slug}`, 308 for old addresses) is merged and on Staging.
+- Sprint 8 (catalog `/{slug}/{category}/{subcategory}`) is done on `feat/v2-sprint-8-catalog` with CI green, not merged yet.
+- Open: V2-04a/b (interactive cache checks) and V2-05b (fixture seed, Google sign-in on Staging). Sprint 7 is blocked on Eosoft.
 
 ## Vision
 
@@ -29,6 +32,8 @@ See the open questions (SSO provider, shared Supabase ownership, slug rules, rol
 Update this file after each completed task: date, task ID, changed files, verification performed, known limitations, and next task. Never mark a task complete solely because code was written.
 
 ## Change log
+
+- 2026-11-27 Sprint 8 (`feat/v2-sprint-8-catalog`, CI run 45965429564 green on `2b4b2f6`: 132 Vitest, `rls_test` all passed, 8/8 Playwright). Q8 approved: categories and subcategories live in the page config (draft and published snapshot), depth 2, products open the affiliate URL. V2-30a/b/c, V2-31a/b/c DONE; V2-32a DROPPED (publish already refreshes category routes through the page's cache tags); no migration. New routes `/{slug}/{category}` and `/{slug}/{category}/{subcategory}`. An exact old `/{username}/{slug}` address wins over a category, so links cannot be captured (independent review, high). Unknown categories and other 2–3 segment non-app paths answer a real 404. Internal links skip prefetch. The editor preview no longer follows internal links, which would drop the unsaved draft. Checked locally with `next build`/`next start` against Staging (read-only GETs only). Follow-ups in V2-31d.
 
 - 2026-11-26: Sprint 6 migrations pushed to Staging after the merge of #10 (approved). Live read-only checks: 2 users → 2 companies with 2 owner rows, 0 pages without a company, slugs unchanged (no collisions), 4 redirects (3 old `/{username}/{slug}` addresses + 1 earlier rename collapsed to `/son-hong`), RLS on for every `linktree` table, only bucket `linktree-media`, anon has no access to companies/members/`slug_available`/`delete_page`/`record_page_event`, old `get_published_page(text, text)` gone. Staging site: `/tech-review` 200, old addresses 308, unknown paths 404. Not checked: the signed-in dashboard on Staging.
 

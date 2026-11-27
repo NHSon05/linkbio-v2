@@ -70,6 +70,27 @@ erDiagram
 
 `id bigint generated always as identity PK`, `page_id uuid`, `event_type text check (event_type in ('view','click'))`, `block_id text null`, `referrer_host text null`, `utm_source text null`, `occurred_at timestamptz default now()`. Use aggregate tables/materialized views for reporting at scale.
 
+### Catalog in the page config (V2-30, Q8 approved 2026-11-27)
+
+The catalog is part of `page_versions.config` (`PageConfigSchema` → `catalog`). It is saved with each draft and frozen in each published version, so there are no catalog tables and no extra RLS. `products`/`page_products` stay unused.
+
+```text
+catalog: {
+  products:    [{ id, title, url (http/https), affiliateUrl?, image?, price?, currency?, visible? }]
+  collections: [{ id, name, items: productId[] }]            // shop blocks (FE-06)
+  categories:  [{ id, slug, name, items: productId[],        // /{slug}/{category}
+                  children: [{ id, slug, name, items }] }]   // /{slug}/{category}/{subcategory}
+}
+```
+
+Validated by Zod (`src/lib/schemas/site.ts`, tests in `src/templates/catalog.test.ts`):
+
+- **Depth:** at most 2 levels. A subcategory cannot have `children`.
+- **Slugs:** `^[a-z0-9][a-z0-9-]{0,39}$`, unique among siblings (top level per page, subcategories per parent). The same subcategory slug may appear under two parents.
+- **Ids** are unique across the tree, and every `items` entry must name an existing product.
+- **Limits:** up to 50 categories, 50 subcategories each, and 500 items per category.
+- **Listing:** a category lists its own items, then its subcategories' items, each product once. Hidden products (`visible: false`) are never listed.
+
 ## Essential indexes
 
 - `profiles(username)` unique (case-insensitive).

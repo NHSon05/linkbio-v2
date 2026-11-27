@@ -60,6 +60,14 @@ jobs:
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm e2e
+      # UI-RESP: dashboard screenshots at phone/tablet/desktop widths (e2e/screens.spec.ts), kept for review.
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-screens
+          path: e2e-screens/
+          if-no-files-found: ignore
+          retention-days: 7
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

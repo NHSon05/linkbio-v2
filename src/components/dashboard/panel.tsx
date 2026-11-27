@@ -1,5 +1,12 @@
 import type { ComponentProps, ReactNode } from "react";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 type PanelProps = Omit<ComponentProps<typeof Card>, "title"> & {
@@ -11,14 +18,36 @@ type PanelProps = Omit<ComponentProps<typeof Card>, "title"> & {
 };
 
 /** Section card used throughout the editor and products pages (the demo's `.panel`). */
-export function Panel({ title, actions, hint, className, children, ...props }: PanelProps) {
+export function Panel({
+  title,
+  actions,
+  hint,
+  className,
+  children,
+  ...props
+}: PanelProps) {
   return (
-    <Card className={cn("gap-3.5 [--card-spacing:--spacing(6)]", className)} {...props}>
+    <Card
+      className={cn("gap-3.5 [--card-spacing:--spacing(6)]", className)}
+      {...props}
+    >
       {(title || actions || hint) && (
         <CardHeader>
-          {title && <CardTitle className="text-base font-semibold tracking-tight">{title}</CardTitle>}
-          {hint && <CardDescription className="text-xs leading-[1.55]">{hint}</CardDescription>}
-          {actions && <CardAction className="flex flex-wrap gap-1.5">{actions}</CardAction>}
+          {title && (
+            <CardTitle className="text-base font-semibold tracking-tight">
+              {title}
+            </CardTitle>
+          )}
+          {hint && (
+            <CardDescription className="text-xs leading-[1.55]">
+              {hint}
+            </CardDescription>
+          )}
+          {actions && (
+            <CardAction className="flex flex-wrap gap-1.5">
+              {actions}
+            </CardAction>
+          )}
         </CardHeader>
       )}
       <CardContent>{children}</CardContent>
@@ -37,10 +66,18 @@ export function StatusPill({
     <span
       data-slot="status-pill"
       data-dirty={dirty || undefined}
-      className={cn("inline-flex items-center gap-2 rounded-full bg-muted px-3.5 py-[7px] text-[12.5px]", className)}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full bg-muted px-3.5 py-1.75 text-[12.5px]",
+        className,
+      )}
       {...props}
     >
-      <i className={cn("size-2 rounded-full", dirty ? "bg-warning" : "bg-success")} />
+      <i
+        className={cn(
+          "size-2 rounded-full",
+          dirty ? "bg-warning" : "bg-success",
+        )}
+      />
       <span>{children}</span>
     </span>
   );

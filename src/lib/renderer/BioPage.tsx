@@ -1,17 +1,23 @@
 /* eslint-disable @next/next/no-img-element -- user images come from many hosts; next/image needs each host configured. */
 import type { CSSProperties, ReactNode } from "react";
+import Link from "next/link";
 import {
   luminance,
   regionBlocks,
   themeOf,
   variantOf,
   type Block,
+  type Product,
   type RegionName,
   type Site,
   type Theme,
 } from "@/lib/schemas/site";
 import { templates } from "@/templates";
-import { catalogFor } from "@/templates/catalog";
+import {
+  catalogFor,
+  categoryProducts,
+  type CategoryMatch,
+} from "@/templates/catalog";
 import { cn } from "@/lib/utils";
 import { safeUrl, videoEmbed } from "./blocks";
 
@@ -39,7 +45,15 @@ const NETWORKS: Record<string, string> = {
  */
 // V2-06: the theme overrides the design-token variables that Tailwind classes read (src/styles/tokens.css),
 // so text, spacing and width scale everywhere inside the page without touching each block.
-export const FONT_SIZES = { xs: 0.75, sm: 0.8125, base: 0.875, lg: 1, xl: 1.125, "2xl": 1.375, "3xl": 1.75 }; // rem, mirrors tokens.css
+export const FONT_SIZES = {
+  xs: 0.75,
+  sm: 0.8125,
+  base: 0.875,
+  lg: 1,
+  xl: 1.125,
+  "2xl": 1.375,
+  "3xl": 1.75,
+}; // rem, mirrors tokens.css
 const FONT_SCALE = { sm: 0.9, lg: 1.12 } as const;
 const SPACING = { compact: "0.2rem", relaxed: "0.3rem" } as const; // default --spacing is 0.25rem
 const WIDTH = {
@@ -52,13 +66,17 @@ export function themeScaleVars(theme: Theme): Record<string, string> {
   const vars: Record<string, string> = {};
   if (theme.fontSize === "sm" || theme.fontSize === "lg")
     for (const [step, rem] of Object.entries(FONT_SIZES))
-      vars[`--font-size-${step}`] = `${+(rem * FONT_SCALE[theme.fontSize]).toFixed(4)}rem`;
-  if (theme.spacing === "compact" || theme.spacing === "relaxed") vars["--spacing"] = SPACING[theme.spacing];
-  if (theme.width === "narrow" || theme.width === "wide") Object.assign(vars, WIDTH[theme.width]);
+      vars[`--font-size-${step}`] =
+        `${+(rem * FONT_SCALE[theme.fontSize]).toFixed(4)}rem`;
+  if (theme.spacing === "compact" || theme.spacing === "relaxed")
+    vars["--spacing"] = SPACING[theme.spacing];
+  if (theme.width === "narrow" || theme.width === "wide")
+    Object.assign(vars, WIDTH[theme.width]);
   return vars;
 }
 
-export function BioPage({ site }: { site: Site }) {
+/** V2-31: with `view`, renders that category or subcategory of the catalog instead of the root page. */
+export function BioPage({ site, view }: { site: Site; view?: CategoryMatch }) {
   const tpl = templates[site.template] ?? templates.classic;
   const theme = themeOf(site, tpl);
   const dark = luminance(theme.bg) < 0.5;
@@ -101,6 +119,17 @@ export function BioPage({ site }: { site: Site }) {
     );
   };
 
+  const column = cn(
+    "mx-auto grid max-w-md gap-5 px-5 pt-8 pb-12 @5xl:gap-8 @5xl:px-10",
+    tpl.desktop === "grid" ? "@5xl:max-w-6xl" : "@5xl:max-w-3xl",
+  );
+  const categories = catalogFor(site).categories.map((c) => ({
+    id: c.id,
+    href: path(site.slug, c.slug),
+    name: c.name,
+  }));
+  const categoryNav = <ChipNav label="Danh mục" items={categories} />;
+
   // Container queries: the same markup adapts to the phone preview, the desktop preview and the real page.
   return (
     <div
@@ -109,7 +138,11 @@ export function BioPage({ site }: { site: Site }) {
       style={style}
       className="@container min-h-full w-full"
     >
-      {tpl.desktop === "split" ? (
+      {view ? (
+        <div className={column}>
+          <CategoryView site={site} view={view} />
+        </div>
+      ) : tpl.desktop === "split" ? (
         <div className="mx-auto grid max-w-md gap-5 px-5 pt-8 pb-12 @5xl:max-w-6xl @5xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @5xl:items-start @5xl:gap-10 @5xl:px-10">
           <div className="grid gap-5 @5xl:sticky @5xl:top-8">
             <ProfileHeader site={site} />
@@ -117,23 +150,136 @@ export function BioPage({ site }: { site: Site }) {
           </div>
           <div className="grid gap-5">
             {region("main")}
+            {categoryNav}
             {region("footer")}
           </div>
         </div>
       ) : (
-        <div
-          className={cn(
-            "mx-auto grid max-w-md gap-5 px-5 pt-8 pb-12 @5xl:gap-8 @5xl:px-10",
-            tpl.desktop === "grid" ? "@5xl:max-w-6xl" : "@5xl:max-w-3xl",
-          )}
-        >
+        <div className={column}>
           <ProfileHeader site={site} />
           {region("hero")}
           {region("main")}
+          {categoryNav}
           {region("footer")}
         </div>
       )}
     </div>
+  );
+}
+
+// Internal links use prefetch={false}: every prefetch passes the proxy's uncached page lookup.
+/** Internal page address; each segment is encoded so stored text can never form another origin. */
+const path = (...segments: string[]) =>
+  "/" + segments.map(encodeURIComponent).join("/");
+
+/** Compact list of links to category pages (client navigation through next/link). */
+function ChipNav({
+  label,
+  items,
+}: {
+  label: string;
+  items: { id: string; href: string; name: string }[];
+}) {
+  if (!items.length) return null;
+  return (
+    <nav aria-label={label} className="grid gap-3">
+      <h2 className="text-base font-semibold">{label}</h2>
+      <ul className="flex flex-wrap gap-2">
+        {items.map((item) => (
+          <li key={item.id}>
+            <Link
+              href={item.href}
+              prefetch={false}
+              className="block rounded-(--bio-button-radius) bg-(--bio-surface) px-4 py-2 text-sm font-medium"
+            >
+              {item.name}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+/** V2-31: /{slug}/{category}[/{sub}]: compact header, breadcrumbs, subcategories and the products. */
+function CategoryView({ site, view }: { site: Site; view: CategoryMatch }) {
+  const { category, subcategory } = view;
+  const { profile } = site;
+  const avatar = safeUrl(profile.avatar);
+  const root = path(site.slug);
+  const crumbs = [
+    { href: root, name: profile.title },
+    { href: path(site.slug, category.slug), name: category.name },
+  ];
+  if (subcategory)
+    crumbs.push({
+      href: path(site.slug, category.slug, subcategory.slug),
+      name: subcategory.name,
+    });
+  return (
+    <>
+      <header>
+        <Link
+          href={root}
+          prefetch={false}
+          className="flex w-fit items-center gap-3"
+        >
+          {avatar ? (
+            <img
+              alt=""
+              src={avatar}
+              className="size-10 rounded-full object-cover"
+            />
+          ) : (
+            <span
+              aria-hidden
+              className="grid size-10 place-items-center rounded-full bg-(--bio-accent) text-sm font-semibold text-[#282828]"
+            >
+              {profile.title.trim().charAt(0).toUpperCase()}
+            </span>
+          )}
+          <span className="text-sm font-semibold">{profile.title}</span>
+        </Link>
+      </header>
+      <nav aria-label="Breadcrumb">
+        <ol className="flex flex-wrap items-center gap-1.5 text-xs">
+          {crumbs.map((crumb, i) => {
+            const current = i === crumbs.length - 1;
+            return (
+              <li key={crumb.href} className="flex items-center gap-1.5">
+                {i > 0 && (
+                  <span aria-hidden className="text-(--bio-muted)">
+                    /
+                  </span>
+                )}
+                <Link
+                  href={crumb.href}
+                  prefetch={false}
+                  aria-current={current ? "page" : undefined}
+                  className={current ? "font-semibold" : "text-(--bio-muted)"}
+                >
+                  {crumb.name}
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+      <h1 className="text-xl font-semibold tracking-tight @5xl:text-3xl">
+        {(subcategory ?? category).name}
+      </h1>
+      {!subcategory && (
+        <ChipNav
+          label="Danh mục con"
+          items={category.children.map((c) => ({
+            id: c.id,
+            href: path(site.slug, category.slug, c.slug),
+            name: c.name,
+          }))}
+        />
+      )}
+      <ProductGrid products={categoryProducts(site, view)} />
+    </>
   );
 }
 
@@ -319,53 +465,58 @@ function BlockView({ block, site }: { block: Block; site: Site }) {
         </figure>
       );
     }
-    case "shop": {
-      const products = catalogFor(site).products.filter(
-        (p) => p.visible !== false,
-      );
+    case "shop":
       return (
         <section className="col-span-full grid gap-3">
           {block.title && (
             <h2 className="text-base font-semibold">{block.title}</h2>
           )}
-          {products.length ? (
-            <ul className="grid grid-cols-2 gap-3 @5xl:grid-cols-4">
-              {products.map((product) => {
-                const image = safeUrl(product.image);
-                return (
-                  <li key={product.id}>
-                    <MaybeLink
-                      url={product.affiliateUrl || product.url}
-                      trackId={product.id}
-                      className="block h-full overflow-hidden rounded-(--bio-radius) bg-(--bio-surface)"
-                    >
-                      {image && (
-                        <img
-                          alt=""
-                          src={image}
-                          className="aspect-square w-full bg-white object-contain p-3"
-                        />
-                      )}
-                      <span className="block p-3">
-                        <span className="line-clamp-2 block text-xs font-semibold">
-                          {product.title}
-                        </span>
-                      </span>
-                    </MaybeLink>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="rounded-(--bio-radius) bg-(--bio-surface) p-4 text-center text-xs text-(--bio-muted)">
-              Chưa có sản phẩm
-            </p>
-          )}
+          <ProductGrid
+            products={catalogFor(site).products.filter(
+              (p) => p.visible !== false,
+            )}
+          />
         </section>
       );
-    }
     default:
       // Types outside the v1 set (carousel, events, …) are skipped instead of breaking the page.
       return null;
   }
+}
+
+/** Product cards of the shop block and category views; each opens the product's affiliate link. */
+function ProductGrid({ products }: { products: Product[] }) {
+  return products.length ? (
+    <ul className="grid grid-cols-2 gap-3 @5xl:grid-cols-4">
+      {products.map((product) => {
+        const image = safeUrl(product.image);
+        return (
+          <li key={product.id}>
+            <MaybeLink
+              url={product.affiliateUrl || product.url}
+              trackId={product.id}
+              className="block h-full overflow-hidden rounded-(--bio-radius) bg-(--bio-surface)"
+            >
+              {image && (
+                <img
+                  alt=""
+                  src={image}
+                  className="aspect-square w-full bg-white object-contain p-3"
+                />
+              )}
+              <span className="block p-3">
+                <span className="line-clamp-2 block text-xs font-semibold">
+                  {product.title}
+                </span>
+              </span>
+            </MaybeLink>
+          </li>
+        );
+      })}
+    </ul>
+  ) : (
+    <p className="rounded-(--bio-radius) bg-(--bio-surface) p-4 text-center text-xs text-(--bio-muted)">
+      Chưa có sản phẩm
+    </p>
+  );
 }
